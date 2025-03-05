@@ -1,3 +1,4 @@
+import datetime
 import json
 import logging
 import os
@@ -6,7 +7,6 @@ from typing import Any, Dict, List, cast
 import pandas as pd
 import requests
 from dotenv import load_dotenv
-import datetime
 
 # создание абсолютного пути из относительного
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -22,6 +22,28 @@ utils_logger.addHandler(file_handler)
 utils_logger.setLevel(logging.DEBUG)
 
 
+def greeting_from_time_to_time(date_obj: datetime.datetime) -> str:
+    """Функция выводит сообщение приветствия согласно времени суток"""
+    try:
+        hours = date_obj.hour
+        utils_logger.info(f"Выполняется функция приветствия в {hours} часов")
+        if 0 <= hours < 6:
+            message = "Доброй ночи"
+        elif 6 <= hours < 12:
+            message = "Доброе утро"
+        elif 12 <= hours < 18:
+            message = "Добрый день"
+        else:
+            message = "Добрый вечер"
+        utils_logger.info(f"Функция приветствия в {hours} часов выполнена")
+        return message
+
+    except Exception as exc_info:
+        error_message = f"Что-то пошло не так. {str(exc_info)}"
+        utils_logger.error(error_message)
+        raise Exception(error_message)
+
+
 def get_transactions_from_excel(file_path: str) -> List[Dict[str, Any]]:
     """Функция принимает файл (*.xlsx) и выводит список словарей"""
     try:
@@ -33,7 +55,7 @@ def get_transactions_from_excel(file_path: str) -> List[Dict[str, Any]]:
         for record in records:
             for key, value in record.items():
                 if pd.isna(value):
-                    record[key] = 0
+                    record[key] = None
         result = cast(List[Dict[str, Any]], records)
         utils_logger.info(f'Преобразование JSON-файла "{file_path}" в объект Python выполнено')
         return result
@@ -80,7 +102,8 @@ def get_user_settings_from_json(file_path: str) -> List[Dict[str, Any]]:
 
 
 def get_apilayer_convert_rates(*, base: str, symbols: str) -> float:
-    """Функция курса валюты, Exchange Rates Data API GET/latest: https://apilayer.com/marketplace/exchangerates_data-api"""
+    """Функция курса валюты, Exchange Rates Data API GET/latest:
+    https://apilayer.com/marketplace/exchangerates_data-api"""
     load_dotenv("../.env")
     api_key = os.getenv("APILAYER_EDAPI_KEY")
 
@@ -90,7 +113,7 @@ def get_apilayer_convert_rates(*, base: str, symbols: str) -> float:
     url = f"https://api.apilayer.com/exchangerates_data/latest?symbols={symbols}&base={base}"
 
     try:
-        utils_logger.info(f"Выполняем запрос у Exchange Rates Data API GET/latest")
+        utils_logger.info("Выполняем запрос у Exchange Rates Data API GET/latest")
         response = requests.request("GET", url, headers=headers, data=payload)
         # status_code = response.status_code
         # result = response.text
@@ -113,7 +136,7 @@ def get_apilayer_convert_rates(*, base: str, symbols: str) -> float:
         #     "timestamp": 1519296206
         # }
         result = round(float(output_data["rates"][symbols]), 2)
-        utils_logger.info(f"Получение данный у Exchange Rates Data API GET/latest - прошло успешно")
+        utils_logger.info("Получение данный у Exchange Rates Data API GET/latest - прошло успешно")
         return result
 
     except requests.exceptions.ConnectionError:
@@ -144,27 +167,65 @@ def get_currencies_rates_in_rub(currencies: List[str]) -> List[Dict[str, Any]]:
         raise Exception(error_message)
 
 
-def filter_operations_by_month_and_date(
-    operations: List[Dict[str, Any]], date_obj: datetime.datetime
-) -> List[Dict[str, Any]]:
-    """Функция принимает операции и дату запроса, выводит список транзакций с 1 числа месяца по введенное число"""
-    # определяем месяц и год запроса
+def filter_operations_by_month_and_date(df: pd.DataFrame, date_obj: datetime.datetime) -> pd.DataFrame:
+    """
+    Функция принимает DataFrame и дату: фильтрует операции по дате с 1 числа по дату, так же операции по статусу Ok.
+    Возвращает отфильтрованный DataFrame
+    """
     year = date_obj.year
     month = date_obj.month
-    # дата начала и дата конца фильтрации
     date_to = date_obj
     date_from = datetime.datetime(year, month, 1)
-    # "Дата операции": "31.12.2021 16:44:00"
-    return [
-        operation
-        for operation in operations
-        if date_from <= datetime.datetime.strptime(operation["Дата операции"], "%d.%m.%Y %H:%M:%S") <= date_to
-    ]
+    # переводим дату (DD.MM.YYYY HH:MM:SS) в datetime
+    df["Дата операции"] = pd.to_datetime(df["Дата операции"], dayfirst=True)
+    filtered_df = df[(df["Дата операции"] >= date_from) & (df["Дата операции"] <= date_to) & (df["Статус"] == "OK")]
+    # переводим дату обратно в строку
+    filtered_df["Дата операции"] = filtered_df["Дата операции"].dt.strftime("%d.%m.%Y %H:%M:%S")
+    return filtered_df
+# def filter_operations_by_month_and_date(
+#     operations: List[Dict[str, Any]], date_obj: datetime.datetime
+# ) -> List[Dict[str, Any]]:
+#     """Функция принимает операции и дату запроса, выводит список транзакций с 1 числа месяца по введенное число"""
+#     # определяем месяц и год запроса
+#     year = date_obj.year
+#     month = date_obj.month
+#     # дата начала и дата конца фильтрации
+#     date_to = date_obj
+#     date_from = datetime.datetime(year, month, 1)
+#     # "Дата операции": "31.12.2021 16:44:00"
+#     return [
+#         operation
+#         for operation in operations
+#         if date_from <= datetime.datetime.strptime(operation["Дата операции"], "%d.%m.%Y %H:%M:%S") <= date_to
+#     ]
+
+
+def generate_card_report(df: pd.DataFrame) -> List[Dict[str, Any]]:
+    """Функция принимает DataFrame, выводит список {"last_digits": X, "total_spent": X, "cashback": X}"""
+    filtered_df = df[df["Сумма платежа"] < 0]  # фильтруем только расходы
+    grouped_number_card = filtered_df.groupby("Номер карты").agg({"Сумма платежа": "sum", "Кэшбэк": "sum"})
+    cards_dict = grouped_number_card.to_dict(orient="index")
+    # [{"*4556": {"Сумма операции": -1776.0, "Кэшбэк": 69.0}, ...]
+    # переводим данные в формат
+    # [{"last_digits": "4556", "total_spent": -1776.0, "cashback": 69.0}, ...]
+    result = []
+    for key, value in cards_dict.items():
+        last_digits = str(key)[-4:]
+        card = {
+            "last_digits": last_digits,
+            "total_spent": abs(round(value["Сумма платежа"], 2)),
+            "cashback": value["Кэшбэк"],
+        }
+        result.append(card)
+    return result
 
 
 # if __name__ == "__main__":
-#     print(get_transactions_from_excel("../data/operations.xlsx")[0])
-#     transactions = get_transactions_from_excel("../data/operations.xlsx")
-#     for transaction in transactions:
-#         print(transaction["Номер карты"])
-#     print(get_transactions_from_json("../user_settings.json"))
+#     date_obj = datetime.datetime(2020, 1, 5, 6, 0, 0)
+#     print(greeting_from_time_to_time(date_obj))
+#     file_path_excel = "../data/operations.xlsx"
+#     print(get_transactions_from_excel(file_path_excel)[0])
+#     file_path_json = "../user_settings.json"
+#     print(get_user_settings_from_json("../user_settings.json"))
+#     print(get_apilayer_convert_rates(base="USD", symbols="RUB"))
+#     print(get_currencies_rates_in_rub(["USD", "EUR", "CNY"]))

@@ -1,3 +1,4 @@
+import datetime
 import json
 import os
 from typing import Any, Dict, List
@@ -8,7 +9,32 @@ import pandas as pd
 import pytest
 import requests
 
-from src.utils import get_transactions_from_excel, get_user_settings_from_json, get_apilayer_convert_rates, get_currencies_rates_in_rub
+from src.utils import (
+    filter_operations_by_month_and_date,
+    generate_card_report,
+    get_apilayer_convert_rates,
+    get_currencies_rates_in_rub,
+    get_transactions_from_excel,
+    get_user_settings_from_json,
+    greeting_from_time_to_time,
+)
+
+
+@pytest.mark.parametrize(
+    "mock_time, expected",
+    [
+        (datetime.datetime(2025, 1, 1, 0, 0), "Доброй ночи"),
+        (datetime.datetime(2025, 1, 1, 6, 0), "Доброе утро"),
+        (datetime.datetime(2025, 1, 1, 12, 0), "Добрый день"),
+        (datetime.datetime(2025, 1, 1, 18, 0), "Добрый вечер"),
+    ],
+)
+@patch("datetime.datetime")
+def test_greeting_from_time_to_time(mock_datetime: MagicMock, mock_time: datetime.datetime, expected: str) -> None:
+    """Тестирование, проверяем на разное время, вывод правильного приветствия"""
+    mock_datetime.now.return_value = mock_time
+    result = greeting_from_time_to_time(mock_datetime.now())
+    assert result == expected
 
 
 def test_get_transactions_from_excel_non_existent_file() -> None:
@@ -191,16 +217,47 @@ def test_get_apilayer_convert_rates_connection_error(mock_request: MagicMock) ->
     mock_request.assert_called_once_with("GET", url, headers={"apikey": api_key}, data={})
 
 
-@patch("src.external_api.get_apilayer_convert_rates")
+@patch("src.utils.get_apilayer_convert_rates")
 def test_get_currencies_rates_in_rub(mock_get: MagicMock) -> None:
     """Тестирование при запросе разных"""
     currencies = ["USD", "EUR", "CNY"]
 
     mock_get.side_effect = [89.3, 93.93, 12.26]
     result = get_currencies_rates_in_rub(currencies)
-    expected_result = [{"USD": 89.3}, {"EUR": 93.93}, {"CNY": 12.26}]
+    expected_result = [
+        {"currency": "USD", "rate": 89.3},
+        {"currency": "EUR", "rate": 93.93},
+        {"currency": "CNY", "rate": 12.26},
+    ]
     assert result == expected_result
     # Проверяем, что функция была вызвана хотя бы один раз с каждым из валют
     for currency in currencies:
         mock_get.assert_any_call(base=currency, symbols="RUB")
 
+
+def test_filter_operations_by_month_and_date() -> None:
+    df = pd.DataFrame(
+        {
+            "Дата операции": ["10.05.2018 00:00:00", "10.06.2018 00:00:00", "01.06.2018 00:00:00"],
+            "Статус": ["OK", "FAILED", "OK"],
+        }
+    )
+    expected = pd.DataFrame({"Дата операции": ["01.06.2018 00:00:00"], "Статус": ["OK"]})
+    date_obj = datetime.datetime(2018, 6, 10, 0, 0)
+    # result = filter_operations_by_month_and_date(df, date_obj).loc[row_indexer, col_indexer]
+    result = filter_operations_by_month_and_date(df, date_obj).reset_index(drop=True)
+    assert result.to_dict() == expected.to_dict()
+    # сравнение с помощью pandas
+    pd.testing.assert_frame_equal(result, expected)
+
+
+def test_generate_card_report() -> None:
+    df = pd.DataFrame(
+        {
+            "Номер карты": ["*1234", "*4321", "*1234"],
+            "Сумма платежа": [-10.5, 100.9, -20.55],
+            "Кэшбэк": [1.5, None, 2.5],
+        }
+    )
+    expected = [{"last_digits": "1234", "total_spent": 31.05, "cashback": 4.0}]
+    assert generate_card_report(df) == expected
