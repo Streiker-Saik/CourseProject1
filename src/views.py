@@ -6,7 +6,15 @@ from typing import Any, Dict, List
 
 import pandas as pd
 
-from src.utils import get_transactions_from_excel, get_user_settings_from_json, greeting_from_time_to_time, filter_operations_by_month_and_date, generate_card_report, get_stocks_in_usd, get_currencies_rates_in_rub
+from src.utils import (
+    filter_operations_by_month_and_date,
+    generate_card_report,
+    get_currencies_rates_in_rub,
+    get_stocks_in_usd,
+    get_transactions_from_excel,
+    get_user_settings_from_json,
+    greeting_from_time_to_time,
+)
 
 # создание абсолютного пути из относительного
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -29,22 +37,19 @@ def views_home(date: str, file_operations: str, file_user_settings: str) -> str:
     """
     date_obj = datetime.datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
     operations = get_transactions_from_excel(file_operations)
+    user_settings = get_user_settings_from_json(file_user_settings)
     df = pd.DataFrame(operations)
     filter_df = filter_operations_by_month_and_date(df, date_obj)
 
     # 1. Приветствие
     greeting = greeting_from_time_to_time(date_obj)
 
-    # 2. По каждой карте:
-    # последние 4 цифры карты;
-    # общая сумма расходов;
-    # кешбэк (1 рубль на каждые 100 рублей)
+    # 2. По каждой карте: последние 4 цифры карты; общая сумма расходов; кешбэк (1 рубль на каждые 100 рублей)
     cards = generate_card_report(filter_df)
 
     # 3. Топ - 5 транзакций по сумме платежа
     top_transactions = []
 
-    # user_settings = get_user_settings_from_json(file_user_settings)
     # # 4. Курс валют
     # currencies = user_settings[0].get("user_currencies", [])
     # currency_rates = get_currencies_rates_in_rub(currencies)
@@ -69,8 +74,3 @@ if __name__ == "__main__":
     file_user_settings = "../user_settings.json"
     result = views_home(date, file_operations, file_user_settings)
     print(result)
-
-
-
-
-

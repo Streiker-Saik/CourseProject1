@@ -14,10 +14,11 @@ from src.utils import (
     generate_card_report,
     get_apilayer_convert_rates,
     get_currencies_rates_in_rub,
+    get_stocks_in_usd,
+    get_stocks_price,
     get_transactions_from_excel,
     get_user_settings_from_json,
     greeting_from_time_to_time,
-    get_stocks_in_usd, get_stocks_price
 )
 
 
@@ -253,16 +254,26 @@ def test_get_currencies_rates_in_rub(mock_get: MagicMock) -> None:
         mock_get.assert_any_call(date_obj, code_to="RUB", code_from=currency)
 
 
+def test_get_currencies_rates_in_rub_empty_list() -> None:
+    """Тестирование когда список пустой"""
+    result = get_stocks_in_usd([])
+    assert result == []
+
+
 def test_filter_operations_by_month_and_date() -> None:
     """Тестирование правильно ли функция фильтрует DataFrame"""
     df = pd.DataFrame(
         {
-            "Дата операции": pd.to_datetime(["10.05.2018 00:00:00", "10.06.2018 00:00:00", "01.06.2018 00:00:00"], dayfirst=True),
-            "Статус": ["OK", "FAILED", "OK"]
+            "Дата операции": pd.to_datetime(
+                ["10.05.2018 00:00:00", "10.06.2018 00:00:00", "01.06.2018 00:00:00"], dayfirst=True
+            ),
+            "Статус": ["OK", "FAILED", "OK"],
         }
     )
 
-    expected = pd.DataFrame({"Дата операции": pd.to_datetime(["01.06.2018 00:00:00"], dayfirst=True), "Статус": ["OK"]})
+    expected = pd.DataFrame(
+        {"Дата операции": pd.to_datetime(["01.06.2018 00:00:00"], dayfirst=True), "Статус": ["OK"]}
+    )
     date_obj = datetime.datetime(2018, 6, 10, 0, 0)
 
     result = filter_operations_by_month_and_date(df, date_obj).reset_index(drop=True)
@@ -284,25 +295,38 @@ def test_generate_card_report() -> None:
     assert generate_card_report(df) == expected
 
 
+def test_generate_card_report_empty_dataframe() -> None:
+    """Тестирование когда DataFrame пустой"""
+    df = pd.DataFrame(columns=["Номер карты", "Сумма платежа", "Кэшбэк"])
+    assert generate_card_report(df) == []
+
+
+def test_generate_card_report_missing_columns() -> None:
+    df = pd.DataFrame({"Номер карты": ["*1234", "*4321", "*1234"], "Сумма платежа": [-10.5, 100.9, -20.55]})
+    with pytest.raises(ValueError) as exc_info:
+        generate_card_report(df)
+    assert "Отсутствует необходимый столбец" in str(exc_info)
+
+
 @patch("requests.get")
-def test_get_stock_price(mock_request: MagicMock) -> None:
+def test_get_stocks_price(mock_request: MagicMock) -> None:
     """Тестирование, правильно ли функция возвращает при успешном запросе"""
     stocks = "AAPL"
     expected_result = 235.93
     date_str = "2025-03-05"
-    mock_request.return_value.json.return_value = {"Meta Data": {"3. Last Refreshed": date_str},
-                                                   "Time Series (Daily)": {date_str: {"4. close": expected_result}}}
+    mock_request.return_value.json.return_value = {
+        "Meta Data": {"3. Last Refreshed": date_str},
+        "Time Series (Daily)": {date_str: {"4. close": expected_result}},
+    }
     mock_request.return_value.status_code = 200
-    assert get_stocks_price(stocks) == expected_result
+    assert get_stocks_price(stocks=stocks) == expected_result
     api_key = os.getenv("ALPHAVANTAGE_KEY")
-    url = (
-        f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={stocks}&apikey={api_key}"
-    )
+    url = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={stocks}&apikey={api_key}"
     mock_request.assert_called_once_with(url)
 
 
 @patch("requests.get")
-def test_get_stock_price_api_error(mock_request: MagicMock) -> None:
+def test_get_stocks_price_api_error(mock_request: MagicMock) -> None:
     """Тестирование, правильно ли функция обрабатывает ошибки API статуса"""
     stocks = "AAPL"
 
@@ -310,13 +334,13 @@ def test_get_stock_price_api_error(mock_request: MagicMock) -> None:
     mock_request.return_value.text = "You have"
 
     with pytest.raises(Exception) as exc_info:
-        get_stocks_price(stocks)
+        get_stocks_price(stocks=stocks)
 
     assert "Ошибка API: 429 - You have" in str(exc_info)
 
 
 @patch("requests.get")
-def test_get_stock_price_connection_error(mock_request: MagicMock) -> None:
+def test_get_stocks_price_connection_error(mock_request: MagicMock) -> None:
     """Тестирование, правильно ли функция обрабатывает ошибку соединения"""
     stocks = "AAPL"
 
@@ -324,10 +348,9 @@ def test_get_stock_price_connection_error(mock_request: MagicMock) -> None:
     mock_request.side_effect = requests.exceptions.ConnectionError
 
     with pytest.raises(Exception) as exc_info:
-        get_stocks_price(stocks)
+        get_stocks_price(stocks=stocks)
 
     assert "Connection Error. Please check your network connection" in str(exc_info)
-
 
 
 @patch("src.utils.get_stocks_price")
@@ -336,8 +359,18 @@ def test_get_stocks_in_usd(mock_get: MagicMock) -> None:
     stocks_list = ["AAPL", "AMZN", "GOOGL"]
     mock_get.side_effect = [235.93, 203.8, 170.92]
     result = get_stocks_in_usd(stocks_list)
-    expected_result = [{'stock': 'AAPL', 'price': 235.93}, {'stock': 'AMZN', 'price': 203.8}, {'stock': 'GOOGL', 'price': 170.92}]
+    expected_result = [
+        {"stock": "AAPL", "price": 235.93},
+        {"stock": "AMZN", "price": 203.8},
+        {"stock": "GOOGL", "price": 170.92},
+    ]
     assert result == expected_result
     # Проверяем, что функция была вызвана хотя бы один раз с каждой акцией
     for stocks in stocks_list:
         mock_get.assert_any_call(stocks)
+
+
+def test_get_stocks_in_usd_empty_list() -> None:
+    """Тестирование когда список пустой"""
+    result = get_stocks_in_usd([])
+    assert result == []

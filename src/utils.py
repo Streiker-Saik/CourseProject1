@@ -2,7 +2,7 @@ import datetime
 import json
 import logging
 import os
-from typing import Any, Dict, List, cast, Optional
+from typing import Any, Dict, List, cast
 
 import pandas as pd
 import requests
@@ -101,7 +101,9 @@ def get_user_settings_from_json(file_path: str) -> List[Dict[str, Any]]:
         raise Exception(error_message)
 
 
-def get_apilayer_convert_rates(date_obj: datetime.datetime, *, code_to: str, code_from: str, amount: str="1") -> float:
+def get_apilayer_convert_rates(
+    date_obj: datetime.datetime, *, code_to: str, code_from: str, amount: str = "1"
+) -> float:
     """Функция курса валюты, Exchange Rates Data API GET/convert:
     https://apilayer.com/marketplace/exchangerates_data-api"""
 
@@ -112,7 +114,8 @@ def get_apilayer_convert_rates(date_obj: datetime.datetime, *, code_to: str, cod
     headers = {"apikey": api_key}
     # YYYY-MM-DD
     date_str = date_obj.strftime("%Y-%m-%d")
-    url = f"https://api.apilayer.com/exchangerates_data/convert?to={code_to}&from={code_from}&amount={amount}&date={date_str}"
+    url = (f"https://api.apilayer.com/exchangerates_data/convert?to={code_to}&from={code_from}&amount={amount}"
+           f"&date={date_str}")
 
     try:
         utils_logger.info("Выполняем запрос у Exchange Rates Data API GET/convert")
@@ -141,13 +144,22 @@ def get_apilayer_convert_rates(date_obj: datetime.datetime, *, code_to: str, cod
     #     raise Exception(error_message)
 
 
-def get_currencies_rates_in_rub(currencies: List[str], date_obj: datetime.datetime = datetime.datetime.now()) -> List[Dict[str, Any]]:
+def get_currencies_rates_in_rub(
+    currencies: List[str], date_obj: datetime.datetime = datetime.datetime.now()
+) -> List[Dict[str, Any]]:
     """Функция принимает список валют и возвращает курсы валют в рублях, с запросом в API"""
+    if not currencies:
+        utils_logger.info("Список пуст")
+        return []
+
     try:
         utils_logger.info(f"Началась функция перевода валют '{currencies}'")
         result = []
         for currency in currencies:
-            result_dict = {"currency": currency, "rate": get_apilayer_convert_rates(date_obj, code_to="RUB", code_from=currency)}
+            result_dict = {
+                "currency": currency,
+                "rate": get_apilayer_convert_rates(date_obj, code_to="RUB", code_from=currency),
+            }
             result.append(result_dict)
         utils_logger.info(f"Функция с валютами '{currencies}' прошла успешно")
         return result
@@ -171,7 +183,9 @@ def filter_operations_by_month_and_date(df: pd.DataFrame, date_obj: datetime.dat
         date_from = datetime.datetime(year, month, 1)
         # переводим дату (DD.MM.YYYY HH:MM:SS) в datetime
         df["Дата операции"] = pd.to_datetime(df["Дата операции"], dayfirst=True)
-        filtered_df = df[(df["Дата операции"] >= date_from) & (df["Дата операции"] <= date_to) & (df["Статус"] == "OK")]
+        filtered_df = df[
+            (df["Дата операции"] >= date_from) & (df["Дата операции"] <= date_to) & (df["Статус"] == "OK")
+        ]
         utils_logger.info("Фильтрация прошла успешно")
         return filtered_df
 
@@ -179,6 +193,8 @@ def filter_operations_by_month_and_date(df: pd.DataFrame, date_obj: datetime.dat
         error_message = f"Что-то пошло не так. {str(exc_info)}"
         utils_logger.error(error_message)
         raise Exception(error_message)
+
+
 # def filter_operations_by_month_and_date(
 #     operations: List[Dict[str, Any]], date_obj: datetime.datetime
 # ) -> List[Dict[str, Any]]:
@@ -199,6 +215,10 @@ def filter_operations_by_month_and_date(df: pd.DataFrame, date_obj: datetime.dat
 
 def generate_card_report(df: pd.DataFrame) -> List[Dict[str, Any]]:
     """Функция принимает DataFrame, выводит список {"last_digits": X, "total_spent": X, "cashback": X}"""
+    if df.empty:
+        utils_logger.info("DataFrame пуст")
+        return []
+
     try:
         filtered_df = df[df["Сумма платежа"] < 0]  # фильтруем только расходы
         grouped_number_card = filtered_df.groupby("Номер карты").agg({"Сумма платежа": "sum", "Кэшбэк": "sum"})
@@ -217,13 +237,16 @@ def generate_card_report(df: pd.DataFrame) -> List[Dict[str, Any]]:
             result.append(card)
         return result
 
+    except KeyError as exc_info:
+        raise ValueError(f"Отсутствует необходимый столбец: {str(exc_info)}") from exc_info
+
     except Exception as exc_info:
         error_message = f"Что-то пошло не так. {str(exc_info)}"
         utils_logger.error(error_message)
         raise Exception(error_message)
 
 
-def get_stocks_price(stocks: str) -> float:
+def get_stocks_price(*, stocks: str) -> float:
     """Функция курса акций за предыдущий день, Alpha Vantage:
     https://www.alphavantage.co/"""
     utils_logger.info("Выполняем запрос у Exchange Rates Data API GET/convert")
@@ -259,11 +282,16 @@ def get_stocks_price(stocks: str) -> float:
 
 def get_stocks_in_usd(stocks_list: List[str]) -> List[Dict[str, Any]]:
     """Функция принимает список акций и возвращает курсы акции в долларах(последнее закрытие дня), с запросом в API"""
+    if not stocks_list:
+        utils_logger.info("Список пуст")
+        return []
+
     try:
         utils_logger.info(f"Началась функция курса акций началась. Акции '{stocks_list}'")
         result = []
         for stocks in stocks_list:
-            result_dict = {"stock": stocks, "price": get_stocks_price(stocks)}
+            price = get_stocks_price(stocks=stocks)
+            result_dict = {"stock": stocks, "price": price}
             result.append(result_dict)
         utils_logger.info(f"Функция с акциями '{stocks_list}' - прошла успешно")
         return result
@@ -274,21 +302,36 @@ def get_stocks_in_usd(stocks_list: List[str]) -> List[Dict[str, Any]]:
         raise Exception(error_message)
 
 
-if __name__ == "__main__":
-    file_path_json = "../user_settings.json"
-    user_settings = get_user_settings_from_json(file_path_json)
-    symbols = user_settings[0].get("user_stocks", [])
-    print(get_stocks_in_usd(symbols))
-#
-#
+# def generator_top_transactions(df: pd.DataFrame) -> List[Dict[str, Any]]:
+#     filtered_df = df[df["Сумма платежа"] < 0]  # фильтруем только расходы
+#     grouped_category = filtered_df.groupby("Категория").agg({"Сумма платежа": "sum", "Кэшбэк": "sum"})
+#     cards_dict = grouped_category.to_dict(orient="index")
+
+
+# if __name__ == "__main__":
 #     date_obj = datetime.datetime(2020, 1, 5, 6, 0, 0)
 #     print(greeting_from_time_to_time(date_obj))
+#
 #     file_path_excel = "../data/operations.xlsx"
 #     print(get_transactions_from_excel(file_path_excel)[0])
 #
-#     print(get_user_settings_from_json("../user_settings.json"))
+#     file_path_json = "../user_settings.json"
+#     user_settings = get_user_settings_from_json(file_path_json)
+#     print(user_settings)
 #
-#     result = get_stock_price(symbols)
-#     print(result)
+#     df = pd.DataFrame(get_transactions_from_excel(file_path_excel))
+#     filter_df = filter_operations_by_month_and_date(df, date_obj)
+#     print(filter_df)
+#
+#     cards = generate_card_report(filter_df)
+#     print(cards)
+#
 #     print(get_apilayer_convert_rates(code_to = "RUB", code_from = "USD"))
 #     print(get_currencies_rates_in_rub(["USD", "EUR", "CNY"]))
+#     stocks_list = user_settings[0].get("user_stocks", [])
+#     print(get_stocks_in_usd(stocks_list))
+#
+#     print(get_stocks_price(stocks = "AAPL"))
+#     print(get_stocks_in_usd(["AAPL", "AMZN", "GOOGL"]))
+#     currencies = user_settings[0].get("user_currencies", [])
+#     print(get_currencies_rates_in_rub(currencies))
