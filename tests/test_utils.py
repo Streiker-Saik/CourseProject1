@@ -17,6 +17,7 @@ from src.utils import (
     get_transactions_from_excel,
     get_user_settings_from_json,
     greeting_from_time_to_time,
+    get_stocks_in_usd, get_stocks_price
 )
 
 
@@ -165,93 +166,113 @@ def test_get_user_settings_from_json_not_list() -> None:
 @patch("requests.request")
 def test_get_apilayer_convert_rates(mock_request: MagicMock) -> None:
     """Тестирование, правильно ли функция возвращает при успешном запросе"""
-    symbols = "RUB"
-    base = "USD"
-    expected_result = 89.3
+    code_to = "RUB"
+    code_from = "USD"
+    amount = "1"
+    date_str = "2025-03-01"
+    date_obj = datetime.datetime.strptime(date_str, "%Y-%m-%d")
+    expected_result = 88.95
 
-    mock_request.return_value.json.return_value = {"rates": {"RUB": expected_result}}
+    mock_request.return_value.json.return_value = {"result": expected_result}
     mock_request.return_value.status_code = 200
 
-    assert get_apilayer_convert_rates(base=base, symbols=symbols) == expected_result
-    # Проверяем был ли вызван один раз
+    assert get_apilayer_convert_rates(date_obj, code_to=code_to, code_from=code_from, amount=amount) == expected_result
     api_key = os.getenv("APILAYER_EDAPI_KEY")
-    url = f"https://api.apilayer.com/exchangerates_data/latest?symbols={symbols}&base={base}"
+    url = (
+        f"https://api.apilayer.com/exchangerates_data/convert?to={code_to}&from={code_from}&amount={amount}"
+        f"&date={date_str}"
+    )
     mock_request.assert_called_once_with("GET", url, headers={"apikey": api_key}, data={})
 
 
 @patch("requests.request")
 def test_get_apilayer_convert_rates_api_error(mock_request: MagicMock) -> None:
-    """Тестирование, правильно ли функция обрабатывает ошибки"""
-    symbols = "RUB"
-    base = "USD"
+    """Тестирование, правильно ли функция обрабатывает ошибки API статуса"""
+    code_to = "RUB"
+    code_from = "USD"
+    amount = "1"
+    date_str = "2000-01-01"
+    date_obj = datetime.datetime.strptime(date_str, "%Y-%m-%d")
 
     mock_request.return_value.status_code = 429
     mock_request.return_value.text = "You have"
 
     with pytest.raises(Exception) as exc_info:
-        get_apilayer_convert_rates(base=base, symbols=symbols)
+        get_apilayer_convert_rates(date_obj, code_to=code_to, code_from=code_from, amount=amount)
 
-    assert "Что-то пошло не так. Ошибка API: 429 - You have" in str(exc_info)
-    # Проверяем был ли вызван один раз
+    assert "Ошибка API: 429 - You have" in str(exc_info)
     api_key = os.getenv("APILAYER_EDAPI_KEY")
-    url = f"https://api.apilayer.com/exchangerates_data/latest?symbols={symbols}&base={base}"
+    url = (
+        f"https://api.apilayer.com/exchangerates_data/convert?to={code_to}&from={code_from}&amount={amount}"
+        f"&date={date_str}"
+    )
     mock_request.assert_called_once_with("GET", url, headers={"apikey": api_key}, data={})
 
 
 @patch("requests.request")
 def test_get_apilayer_convert_rates_connection_error(mock_request: MagicMock) -> None:
     """Тестирование, правильно ли функция обрабатывает ошибку соединения"""
-    symbols = "RUB"
-    base = "USD"
+    code_to = "RUB"
+    code_from = "USD"
+    amount = "1"
+    date_str = "2000-01-01"
+    date_obj = datetime.datetime.strptime(date_str, "%Y-%m-%d")
 
     # имитация ошибки соединения
     mock_request.side_effect = requests.exceptions.ConnectionError
 
     with pytest.raises(Exception) as exc_info:
-        get_apilayer_convert_rates(base=base, symbols=symbols)
+        get_apilayer_convert_rates(date_obj, code_to=code_to, code_from=code_from, amount=amount)
 
     assert "Connection Error. Please check your network connection" in str(exc_info)
-    # Проверяем был ли вызван один раз
     api_key = os.getenv("APILAYER_EDAPI_KEY")
-    url = f"https://api.apilayer.com/exchangerates_data/latest?symbols={symbols}&base={base}"
+    url = (
+        f"https://api.apilayer.com/exchangerates_data/convert?to={code_to}&from={code_from}&amount={amount}"
+        f"&date={date_str}"
+    )
     mock_request.assert_called_once_with("GET", url, headers={"apikey": api_key}, data={})
 
 
 @patch("src.utils.get_apilayer_convert_rates")
 def test_get_currencies_rates_in_rub(mock_get: MagicMock) -> None:
-    """Тестирование при запросе разных"""
+    """Тестирование при запросе разных валют"""
     currencies = ["USD", "EUR", "CNY"]
 
     mock_get.side_effect = [89.3, 93.93, 12.26]
-    result = get_currencies_rates_in_rub(currencies)
+    date_str = "2025-03-01"
+    date_obj = datetime.datetime.strptime(date_str, "%Y-%m-%d")
+    result = get_currencies_rates_in_rub(currencies, date_obj)
     expected_result = [
         {"currency": "USD", "rate": 89.3},
         {"currency": "EUR", "rate": 93.93},
         {"currency": "CNY", "rate": 12.26},
     ]
     assert result == expected_result
-    # Проверяем, что функция была вызвана хотя бы один раз с каждым из валют
+    # Проверяем, что функция была вызвана хотя бы один раз с каждой из валют
     for currency in currencies:
-        mock_get.assert_any_call(base=currency, symbols="RUB")
+        mock_get.assert_any_call(date_obj, code_to="RUB", code_from=currency)
 
 
 def test_filter_operations_by_month_and_date() -> None:
+    """Тестирование правильно ли функция фильтрует DataFrame"""
     df = pd.DataFrame(
         {
-            "Дата операции": ["10.05.2018 00:00:00", "10.06.2018 00:00:00", "01.06.2018 00:00:00"],
-            "Статус": ["OK", "FAILED", "OK"],
+            "Дата операции": pd.to_datetime(["10.05.2018 00:00:00", "10.06.2018 00:00:00", "01.06.2018 00:00:00"], dayfirst=True),
+            "Статус": ["OK", "FAILED", "OK"]
         }
     )
-    expected = pd.DataFrame({"Дата операции": ["01.06.2018 00:00:00"], "Статус": ["OK"]})
+
+    expected = pd.DataFrame({"Дата операции": pd.to_datetime(["01.06.2018 00:00:00"], dayfirst=True), "Статус": ["OK"]})
     date_obj = datetime.datetime(2018, 6, 10, 0, 0)
-    # result = filter_operations_by_month_and_date(df, date_obj).loc[row_indexer, col_indexer]
+
     result = filter_operations_by_month_and_date(df, date_obj).reset_index(drop=True)
-    assert result.to_dict() == expected.to_dict()
+
     # сравнение с помощью pandas
     pd.testing.assert_frame_equal(result, expected)
 
 
 def test_generate_card_report() -> None:
+    """Тестирование работы функции на вывод требуемого словаря"""
     df = pd.DataFrame(
         {
             "Номер карты": ["*1234", "*4321", "*1234"],
@@ -261,3 +282,62 @@ def test_generate_card_report() -> None:
     )
     expected = [{"last_digits": "1234", "total_spent": 31.05, "cashback": 4.0}]
     assert generate_card_report(df) == expected
+
+
+@patch("requests.get")
+def test_get_stock_price(mock_request: MagicMock) -> None:
+    """Тестирование, правильно ли функция возвращает при успешном запросе"""
+    stocks = "AAPL"
+    expected_result = 235.93
+    date_str = "2025-03-05"
+    mock_request.return_value.json.return_value = {"Meta Data": {"3. Last Refreshed": date_str},
+                                                   "Time Series (Daily)": {date_str: {"4. close": expected_result}}}
+    mock_request.return_value.status_code = 200
+    assert get_stocks_price(stocks) == expected_result
+    api_key = os.getenv("ALPHAVANTAGE_KEY")
+    url = (
+        f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={stocks}&apikey={api_key}"
+    )
+    mock_request.assert_called_once_with(url)
+
+
+@patch("requests.get")
+def test_get_stock_price_api_error(mock_request: MagicMock) -> None:
+    """Тестирование, правильно ли функция обрабатывает ошибки API статуса"""
+    stocks = "AAPL"
+
+    mock_request.return_value.status_code = 429
+    mock_request.return_value.text = "You have"
+
+    with pytest.raises(Exception) as exc_info:
+        get_stocks_price(stocks)
+
+    assert "Ошибка API: 429 - You have" in str(exc_info)
+
+
+@patch("requests.get")
+def test_get_stock_price_connection_error(mock_request: MagicMock) -> None:
+    """Тестирование, правильно ли функция обрабатывает ошибку соединения"""
+    stocks = "AAPL"
+
+    # имитация ошибки соединения
+    mock_request.side_effect = requests.exceptions.ConnectionError
+
+    with pytest.raises(Exception) as exc_info:
+        get_stocks_price(stocks)
+
+    assert "Connection Error. Please check your network connection" in str(exc_info)
+
+
+
+@patch("src.utils.get_stocks_price")
+def test_get_stocks_in_usd(mock_get: MagicMock) -> None:
+    """Тестирование при запросе разных акций"""
+    stocks_list = ["AAPL", "AMZN", "GOOGL"]
+    mock_get.side_effect = [235.93, 203.8, 170.92]
+    result = get_stocks_in_usd(stocks_list)
+    expected_result = [{'stock': 'AAPL', 'price': 235.93}, {'stock': 'AMZN', 'price': 203.8}, {'stock': 'GOOGL', 'price': 170.92}]
+    assert result == expected_result
+    # Проверяем, что функция была вызвана хотя бы один раз с каждой акцией
+    for stocks in stocks_list:
+        mock_get.assert_any_call(stocks)
