@@ -4,7 +4,7 @@ import logging
 import os
 from typing import Any, Dict, List
 
-from src.external_api import get_currencies_rates_in_rub
+
 from src.utils import get_transactions_from_excel, get_user_settings_from_json
 from src.operations_filters import filter_operations_by_month_and_date
 
@@ -23,7 +23,7 @@ utils_logger.setLevel(logging.DEBUG)
 
 
 def views_home(date_obj: datetime.datetime, file_operations: str, file_user_settings: str) -> str:
-    """Функция вывода JSON файла главной страницы сайта"""
+    """Функция принимает дату (YYYY-MM-DD HH:MM:SS), пути к списку операций и пользовательским настройкам и выводит JSON файла главной страницы сайта"""
     # 1. Приветствие
     greeting = greeting_from_time_to_time(date_obj)
 
