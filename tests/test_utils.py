@@ -9,17 +9,9 @@ import pandas as pd
 import pytest
 import requests
 
-from src.utils import (
-    filter_operations_by_month_and_date,
-    generate_card_report,
-    get_apilayer_convert_rates,
-    get_currencies_rates_in_rub,
-    get_stocks_in_usd,
-    get_stocks_price,
-    get_transactions_from_excel,
-    get_user_settings_from_json,
-    greeting_from_time_to_time,
-)
+from src.utils import (filter_operations_by_month_and_date, generate_card_report, generator_top_five_transactions,
+                       get_apilayer_convert_rates, get_currencies_rates_in_rub, get_stocks_in_usd, get_stocks_price,
+                       get_transactions_from_excel, get_user_settings_from_json, greeting_from_time_to_time)
 
 
 @pytest.mark.parametrize(
@@ -246,7 +238,7 @@ def test_get_currencies_rates_in_rub(mock_get: MagicMock) -> None:
     expected_result = [
         {"currency": "USD", "rate": 89.3},
         {"currency": "EUR", "rate": 93.93},
-        {"currency": "CNY", "rate": 12.26},
+        {"currency": "CNY", "rate": 12.26}
     ]
     assert result == expected_result
     # Проверяем, что функция была вызвана хотя бы один раз с каждой из валют
@@ -256,7 +248,7 @@ def test_get_currencies_rates_in_rub(mock_get: MagicMock) -> None:
 
 def test_get_currencies_rates_in_rub_empty_list() -> None:
     """Тестирование когда список пустой"""
-    result = get_stocks_in_usd([])
+    result = get_currencies_rates_in_rub([])
     assert result == []
 
 
@@ -291,7 +283,7 @@ def test_generate_card_report() -> None:
             "Кэшбэк": [1.5, None, 2.5],
         }
     )
-    expected = [{"last_digits": "1234", "total_spent": 31.05, "cashback": 4.0}]
+    expected = [{"last_digits": "1234", "total_spent": 31.05, "cashback": 0.31}]
     assert generate_card_report(df) == expected
 
 
@@ -353,6 +345,33 @@ def test_get_stocks_price_connection_error(mock_request: MagicMock) -> None:
     assert "Connection Error. Please check your network connection" in str(exc_info)
 
 
+@patch("requests.get")
+def test_get_stocks_price_test_api_empty_key(mock_request: MagicMock) -> None:
+    """Тестирование при отсутствии нужного ключа"""
+    stocks = "AAPL"
+    date_str = "2025-03-05"
+    mock_request.return_value.json.return_value = {
+        "Meta Data": {"3. Last Refreshed": date_str},
+        "Time Series (Daily)": {date_str: {}},
+    }
+    mock_request.return_value.status_code = 200
+    with pytest.raises(Exception) as exc_info:
+        get_stocks_price(stocks=stocks)
+
+    assert "Ошибка при обработке данных: '4. close'" in str(exc_info)
+
+
+@patch("requests.get")
+def test_get_stocks_price_test_api_error_information(mock_request: MagicMock) -> None:
+    stocks = "AAPL"
+    mock_request.return_value.json.return_value = {"Information": "API rate limit is 25 requests per day"}
+    mock_request.return_value.status_code = 200
+    with pytest.raises(KeyError) as exc_info:
+        get_stocks_price(stocks=stocks)
+
+    assert "API rate limit is 25 requests per day" in str(exc_info)
+
+
 @patch("src.utils.get_stocks_price")
 def test_get_stocks_in_usd(mock_get: MagicMock) -> None:
     """Тестирование при запросе разных акций"""
@@ -367,10 +386,50 @@ def test_get_stocks_in_usd(mock_get: MagicMock) -> None:
     assert result == expected_result
     # Проверяем, что функция была вызвана хотя бы один раз с каждой акцией
     for stocks in stocks_list:
-        mock_get.assert_any_call(stocks)
+        mock_get.assert_any_call(stocks=stocks)
 
 
 def test_get_stocks_in_usd_empty_list() -> None:
     """Тестирование когда список пустой"""
     result = get_stocks_in_usd([])
     assert result == []
+
+
+def test_generator_top_five_transactions() -> None:
+    """Тестирование работы функции на вывод требуемого словаря"""
+    df = pd.DataFrame(
+        {
+            "Дата платежа": ["06.01.2020", "06.01.2020", "04.01.2020", "06.01.2020", "04.01.2020"],
+            "Сумма платежа": [-67.0, -88.0, -149.0, -203.0, -362.0],
+            "Категория": ["Супермаркеты", "Супермаркеты", "Топливо", "Аптеки", "Красота"],
+            "Описание": ["Magazin 25", "Magazin 25", "Circle K", "OOO Dobrodeya", "OOO Balid"],
+        }
+    )
+    expected = [
+        {"date": "06.01.2020", "amount": -67.0, "category": "Супермаркеты", "description": "Magazin 25"},
+        {"date": "06.01.2020", "amount": -88.0, "category": "Супермаркеты", "description": "Magazin 25"},
+        {"date": "04.01.2020", "amount": -149.0, "category": "Топливо", "description": "Circle K"},
+        {"date": "06.01.2020", "amount": -203.0, "category": "Аптеки", "description": "OOO Dobrodeya"},
+        {"date": "04.01.2020", "amount": -362.0, "category": "Красота", "description": "OOO Balid"},
+    ]
+    assert generator_top_five_transactions(df) == expected
+
+
+#
+def test_generator_top_five_transactions_empty_dataframe() -> None:
+    """Тестирование когда DataFrame пустой"""
+    df = pd.DataFrame(columns=["Дата платежа", "Сумма платежа", "Категория", "Описание"])
+    assert generator_top_five_transactions(df) == []
+
+
+def test_generator_top_five_transactions_missing_columns() -> None:
+    df = pd.DataFrame(
+        {
+            "Дата платежа": ["06.01.2020", "06.01.2020", "04.01.2020", "06.01.2020", "04.01.2020"],
+            "Сумма платежа": [-67.0, -88.0, -149.0, -203.0, -362.0],
+            "Категория": ["Супермаркеты", "Супермаркеты", "Топливо", "Аптеки", "Красота"],
+        }
+    )
+    with pytest.raises(ValueError) as exc_info:
+        generator_top_five_transactions(df)
+    assert "Отсутствует необходимый столбец" in str(exc_info)
