@@ -2,6 +2,7 @@ import datetime
 import json
 import logging
 import os
+import re
 from typing import Any, Dict, List, cast
 
 import pandas as pd
@@ -20,6 +21,21 @@ file_formater = logging.Formatter("%(asctime)s - %(name)s: %(funcName)s - %(leve
 file_handler.setFormatter(file_formater)
 utils_logger.addHandler(file_handler)
 utils_logger.setLevel(logging.DEBUG)
+
+
+def validate_and_format_date(date: str) -> datetime.datetime:
+    """Функция проверки правильности формата строки даты и форматирование (YYYY-MM-DD или YYYY-MM-DD HH:MM:SS)"""
+    utils_logger.info("Функция проверки формата и форматирование начато")
+    if re.search(r"^\d{4}-\d{2}-\d{2}$", date):
+        date_obj = datetime.datetime.strptime(date, "%Y-%m-%d")
+    elif re.search(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$", date):
+        date_obj = datetime.datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
+    else:
+        error_message = "Данного формата не поддерживается"
+        utils_logger.error(error_message)
+        raise ValueError(error_message)
+    utils_logger.info("Функция проверки формата и форматирование выполнена")
+    return date_obj
 
 
 def greeting_from_time_to_time(date_obj: datetime.datetime) -> str:
@@ -102,7 +118,7 @@ def get_user_settings_from_json(file_path: str) -> List[Dict[str, Any]]:
 
 
 def get_apilayer_convert_rates(
-        date_obj: datetime.datetime, *, code_to: str, code_from: str, amount: str = "1"
+    date_obj: datetime.datetime, *, code_to: str, code_from: str, amount: str = "1"
 ) -> float:
     """Функция курса валюты, Exchange Rates Data API GET/convert:
     https://apilayer.com/marketplace/exchangerates_data-api"""
@@ -147,7 +163,7 @@ def get_apilayer_convert_rates(
 
 
 def get_currencies_rates_in_rub(
-        currencies: List[str], date_obj: datetime.datetime = datetime.datetime.now()
+    currencies: List[str], date_obj: datetime.datetime = datetime.datetime.now()
 ) -> List[Dict[str, Any]]:
     """Функция принимает список валют и возвращает курсы валют в рублях, с запросом в API"""
     if not currencies:
@@ -185,9 +201,7 @@ def filter_operations_by_month_and_date(df: pd.DataFrame, date_obj: datetime.dat
     date_from = datetime.datetime(year, month, 1)
     # переводим дату (DD.MM.YYYY HH:MM:SS) в datetime
     df["Дата операции"] = pd.to_datetime(df["Дата операции"], dayfirst=True)
-    filtered_df = df[
-        (df["Дата операции"] >= date_from) & (df["Дата операции"] <= date_to) & (df["Статус"] == "OK")
-        ]
+    filtered_df = df[(df["Дата операции"] >= date_from) & (df["Дата операции"] <= date_to) & (df["Статус"] == "OK")]
     utils_logger.info("Фильтрация прошла успешно")
     return filtered_df
 
@@ -354,7 +368,10 @@ def generator_top_five_transactions(df: pd.DataFrame) -> List[Dict[str, Any]]:
     #     utils_logger.error(error_message)
     #     raise Exception(error_message)
 
+
 # if __name__ == "__main__":
+#     date = "2020-01-05 06:00:00"
+#     print(validate_and_format_date(date))
 #     date_obj = datetime.datetime(2020, 1, 5, 6, 0, 0)
 #     print(greeting_from_time_to_time(date_obj))
 #

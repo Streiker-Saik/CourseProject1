@@ -9,9 +9,41 @@ import pandas as pd
 import pytest
 import requests
 
-from src.utils import (filter_operations_by_month_and_date, generate_card_report, generator_top_five_transactions,
-                       get_apilayer_convert_rates, get_currencies_rates_in_rub, get_stocks_in_usd, get_stocks_price,
-                       get_transactions_from_excel, get_user_settings_from_json, greeting_from_time_to_time)
+from src.utils import (
+    filter_operations_by_month_and_date,
+    generate_card_report,
+    generator_top_five_transactions,
+    get_apilayer_convert_rates,
+    get_currencies_rates_in_rub,
+    get_stocks_in_usd,
+    get_stocks_price,
+    get_transactions_from_excel,
+    get_user_settings_from_json,
+    greeting_from_time_to_time,
+    validate_and_format_date,
+)
+
+
+@pytest.mark.parametrize(
+    "date, expected", [
+        ("2025-01-01", (datetime.datetime(2025, 1, 1))),
+        ("2025-01-01 06:00:00", (datetime.datetime(2025, 1, 1, 6, 0, 0)))
+    ]
+)
+def test_greeting_from_time_to_time(date: str, expected: datetime.datetime) -> None:
+    """Тестирование преобразование строки в datetime"""
+    result = validate_and_format_date(date)
+    assert result == expected
+
+
+def test_greeting_from_time_to_time_none_format() -> None:
+    """Тестирование при не нахождении формата"""
+    date = "01-01-2020"
+
+    with pytest.raises(ValueError) as exc_info:
+        validate_and_format_date(date)
+
+    assert "Данного формата не поддерживается" == str(exc_info.value)
 
 
 @pytest.mark.parametrize(
@@ -238,7 +270,7 @@ def test_get_currencies_rates_in_rub(mock_get: MagicMock) -> None:
     expected_result = [
         {"currency": "USD", "rate": 89.3},
         {"currency": "EUR", "rate": 93.93},
-        {"currency": "CNY", "rate": 12.26}
+        {"currency": "CNY", "rate": 12.26},
     ]
     assert result == expected_result
     # Проверяем, что функция была вызвана хотя бы один раз с каждой из валют
@@ -423,6 +455,7 @@ def test_generator_top_five_transactions_empty_dataframe() -> None:
 
 
 def test_generator_top_five_transactions_missing_columns() -> None:
+    """Тестирование при отсутствии нужного столбца"""
     df = pd.DataFrame(
         {
             "Дата платежа": ["06.01.2020", "06.01.2020", "04.01.2020", "06.01.2020", "04.01.2020"],
