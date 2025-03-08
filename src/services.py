@@ -26,6 +26,7 @@ def get_top_three_category(data: List[Dict[str, Any]], year: int, month: int) ->
     Функция принимает данные с транзакциями, год и месяц за который проводится анализ,
     выводит JSON строку 3 лучших категорий
     """
+    services_logger.info("Функция получения топ 3 категории начата")
     # if data is None or year is None or month is None:
     #     raise TypeError("Вводные дынные отсутствуют")
     #
@@ -67,13 +68,14 @@ def get_top_three_category(data: List[Dict[str, Any]], year: int, month: int) ->
     # Выводим в абсолютных значения, процент cashback, с двумя знаками после запятой
     group_cate_category["Сумма платежа"] = (group_cate_category["Сумма платежа"].abs() * cashback).round(2)
 
-    # Проверяем, есть ли отфильтрованные данные
     if group_cate_category.empty:
+        services_logger.warning("Отфильтрованные данные пустые")
         return json.dumps({}, indent=4, ensure_ascii=False)
 
     top_three_category = group_cate_category.to_dict(orient="index")
     data_output = {category: values["Сумма платежа"] for category, values in top_three_category.items()}
     result = json.dumps(data_output, indent=4, ensure_ascii=False)
+    services_logger.info("Функция получения топ 3 категории выполнена")
     return result
 
 
