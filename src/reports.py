@@ -1,9 +1,11 @@
-import os
-import logging
-import json
 import datetime
-from typing import Optional
+import logging
+import os
+from functools import wraps
+from typing import Any, Callable, Optional
+
 import pandas as pd
+
 from src.utils import validate_and_format_date
 
 # создание абсолютного пути из относительного
@@ -20,6 +22,25 @@ reports_logger.addHandler(file_handler)
 reports_logger.setLevel(logging.DEBUG)
 
 
+def report_execution(fail_path: Optional[str] = None) -> Callable:
+    """Декоратор выводящий результат выполнения функции(с DataFrame) файл *.csv, по умолчанию там же"""
+
+    def decorator(func: Callable) -> Callable:
+        @wraps(func)
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            result = func(*args, **kwargs)
+            if not fail_path:
+                result.to_csv(f"{func.__name__}.csv", index=False, encoding="utf-8", sep="\t")
+            else:
+                result.to_csv(fail_path, index=False, encoding="utf-8", sep="/")
+            return result
+
+        return wrapper
+
+    return decorator
+
+
+@report_execution()
 def spending_by_category(transactions: pd.DataFrame, category: str, date: Optional[str] = None) -> pd.DataFrame:
     """Функция принимает DataFrame с транзакциями, название категории и опциональную дату(YYYY-MM-DD).
     Возвращает траты по заданной категории за последние 90 дней (от переданной даты)"""
@@ -50,9 +71,6 @@ def spending_by_category(transactions: pd.DataFrame, category: str, date: Option
         & (transactions["Сумма платежа"] < 0)
         & (transactions["Категория"] == category)
     ]
-    # group = filtered_df.groupby("Категория").agg({"Сумма платежа": "sum"})
-    # group_dict = group.to_dict(orient="index")
-    # print(group_dict)
     reports_logger.info(f"Функция фильтрации DataFrame по {category} завершена успешно")
     return filtered_df
 
@@ -62,4 +80,4 @@ def spending_by_category(transactions: pd.DataFrame, category: str, date: Option
 #     transactions = pd.read_excel(file_excel)
 #     # category = transactions.Категория.unique()
 #     # print(category)
-#     print(spending_by_category(transactions, "Аптеки", ))
+#     print(spending_by_category(transactions, "Аптеки", "2020-01-01"))
