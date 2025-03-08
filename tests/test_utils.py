@@ -9,34 +9,26 @@ import pandas as pd
 import pytest
 import requests
 
-from src.utils import (
-    filter_operations_by_month_and_date,
-    generate_card_report,
-    generator_top_five_transactions,
-    get_apilayer_convert_rates,
-    get_currencies_rates_in_rub,
-    get_stocks_in_usd,
-    get_stocks_price,
-    get_transactions_from_excel,
-    get_user_settings_from_json,
-    greeting_from_time_to_time,
-    validate_and_format_date,
-)
+from src.utils import (filter_operations_by_month_and_date, generate_card_report, generator_top_five_transactions,
+                       get_apilayer_convert_rates, get_currencies_rates_in_rub, get_stocks_in_usd, get_stocks_price,
+                       get_transactions_from_excel, get_user_settings_from_json, greeting_from_time_to_time,
+                       validate_and_format_date)
 
 
 @pytest.mark.parametrize(
-    "date, expected", [
+    "date, expected",
+    [
         ("2025-01-01", (datetime.datetime(2025, 1, 1))),
-        ("2025-01-01 06:00:00", (datetime.datetime(2025, 1, 1, 6, 0, 0)))
-    ]
+        ("2025-01-01 06:00:00", (datetime.datetime(2025, 1, 1, 6, 0, 0))),
+    ],
 )
-def test_greeting_from_time_to_time(date: str, expected: datetime.datetime) -> None:
+def test_validate_and_format_date(date: str, expected: datetime.datetime) -> None:
     """Тестирование преобразование строки в datetime"""
     result = validate_and_format_date(date)
     assert result == expected
 
 
-def test_greeting_from_time_to_time_none_format() -> None:
+def test_validate_and_format_date_none_format() -> None:
     """Тестирование при не нахождении формата"""
     date = "01-01-2020"
 

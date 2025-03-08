@@ -87,8 +87,8 @@ def test_spending_by_category_missing_columns() -> None:
     )
     with pytest.raises(ValueError) as exc_info:
         spending_by_category(transactions, "Аптеки")
-    columns = ["Дата операции", "Статус", "Сумма платежа", "Категория"]
-    assert f"DataFrame должен содержать столбцы: {columns}" in str(exc_info)
+    # columns = ["Дата операции", "Статус", "Сумма платежа", "Категория"]
+    assert "DataFrame должен содержать столбцы: ['Статус']" in str(exc_info)
 
 
 def test_report_execution() -> None:

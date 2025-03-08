@@ -54,9 +54,11 @@ def spending_by_category(transactions: pd.DataFrame, category: str, date: Option
     date_to = date_obj
     date_from = date_obj - datetime.timedelta(days=90)
 
-    columns = ["Дата операции", "Статус", "Сумма платежа", "Категория"]
-    if not all(column in transactions.columns for column in columns):
-        error_message = f"DataFrame должен содержать столбцы: {columns}"
+    # Проверяем наличие необходимых столбцов
+    required_columns = ["Дата операции", "Статус", "Сумма платежа", "Категория"]
+    missing_columns = [column for column in required_columns if column not in transactions.columns]
+    if missing_columns:
+        error_message = f"DataFrame должен содержать столбцы: {missing_columns}"
         reports_logger.error(error_message)
         raise ValueError(error_message)
 

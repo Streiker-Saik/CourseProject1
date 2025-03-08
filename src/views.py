@@ -1,21 +1,12 @@
-import datetime
 import json
 import logging
 import os
 
 import pandas as pd
 
-from src.utils import (
-    filter_operations_by_month_and_date,
-    generate_card_report,
-    generator_top_five_transactions,
-    get_currencies_rates_in_rub,
-    get_stocks_in_usd,
-    get_transactions_from_excel,
-    get_user_settings_from_json,
-    greeting_from_time_to_time,
-    validate_and_format_date,
-)
+from src.utils import (filter_operations_by_month_and_date, generate_card_report, generator_top_five_transactions,
+                       get_currencies_rates_in_rub, get_stocks_in_usd, get_transactions_from_excel,
+                       get_user_settings_from_json, greeting_from_time_to_time, validate_and_format_date)
 
 # создание абсолютного пути из относительного
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -36,16 +27,16 @@ def views_home(date: str, file_operations: str, file_user_settings: str) -> str:
     Функция принимает дату (YYYY-MM-DD HH:MM:SS), пути к списку операций и
     пользовательским настройкам и выводит JSON файла главной страницы сайта
     """
-    views_logger.info("Функция получение JSON файла главной страницы - начато")
-    if date is None or file_operations is None or file_user_settings is None:
-        error_message = "Вводные дынные отсутствуют"
-        views_logger.error(error_message)
-        raise TypeError(error_message)
-
-    if not all(isinstance(arg, str) for arg in (date, file_operations, file_user_settings)):
-        error_message = "Введено не строковое значение"
-        views_logger.error(error_message)
-        raise TypeError(error_message)
+    views_logger.info("Функция получение JSON файла главной страницы - начата")
+    # if date is None or file_operations is None or file_user_settings is None:
+    #     error_message = "Вводные дынные отсутствуют"
+    #     views_logger.error(error_message)
+    #     raise TypeError(error_message)
+    #
+    # if not all(isinstance(arg, str) for arg in (date, file_operations, file_user_settings)):
+    #     error_message = "Введено не строковое значение"
+    #     views_logger.error(error_message)
+    #     raise TypeError(error_message)
 
     views_logger.info("Использует функцию src.validate_and_format_date")
     date_obj = validate_and_format_date(date)
