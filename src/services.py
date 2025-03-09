@@ -67,7 +67,7 @@ def get_top_three_category(data: List[Dict[str, Any]], year: int, month: int) ->
     ]
 
     # Группируем по категориям и суммируем, первые 3
-    group_cate_category = filtered_df_by_date.groupby("Категория").agg({"Сумма платежа": "sum"}).sort_values(by="Сумма платежа", ascending=True).head(3)
+    group_cate_category = filtered_df_by_date.groupby("Категория").agg({"Сумма платежа": "sum"}).abs().sort_values(by="Сумма платежа", ascending=False).head(3)
 
     # Выводим в абсолютных значения, процент cashback, с двумя знаками после запятой
     group_cate_category["Сумма платежа"] = (group_cate_category["Сумма платежа"].abs() * cashback).round(2)

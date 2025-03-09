@@ -340,7 +340,8 @@ def generator_top_five_transactions(df: pd.DataFrame) -> List[Dict[str, Any]]:
 
     try:
         columns = df.loc[:, ["Дата платежа", "Сумма платежа", "Категория", "Описание"]]
-        top_five_transactions = columns.sort_values(by="Сумма платежа", ascending=True).head(5)
+        # top_five_transactions = columns.sort_values(by="Сумма платежа", ascending=True).head(5)
+        top_five_transactions = columns.loc[columns["Сумма платежа"].abs().sort_values(ascending=False).index].head(5)
         result = top_five_transactions.to_dict(orient="records")
         # {"Дата платежа": '16.01.2020',
         # "Сумма платежа": 3100.0,
