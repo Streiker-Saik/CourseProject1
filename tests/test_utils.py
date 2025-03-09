@@ -430,11 +430,11 @@ def test_generator_top_five_transactions() -> None:
         }
     )
     expected = [
-        {"date": "06.01.2020", "amount": -67.0, "category": "Супермаркеты", "description": "Magazin 25"},
-        {"date": "06.01.2020", "amount": -88.0, "category": "Супермаркеты", "description": "Magazin 25"},
-        {"date": "04.01.2020", "amount": -149.0, "category": "Топливо", "description": "Circle K"},
-        {"date": "06.01.2020", "amount": -203.0, "category": "Аптеки", "description": "OOO Dobrodeya"},
-        {"date": "04.01.2020", "amount": -362.0, "category": "Красота", "description": "OOO Balid"},
+        {"date": "04.01.2020", "amount": 362.0, "category": "Красота", "description": "OOO Balid"},
+        {"date": "06.01.2020", "amount": 203.0, "category": "Аптеки", "description": "OOO Dobrodeya"},
+        {"date": "04.01.2020", "amount": 149.0, "category": "Топливо", "description": "Circle K"},
+        {"date": "06.01.2020", "amount": 88.0, "category": "Супермаркеты", "description": "Magazin 25"},
+        {"date": "06.01.2020", "amount": 67.0, "category": "Супермаркеты", "description": "Magazin 25"},
     ]
     assert generator_top_five_transactions(df) == expected
 

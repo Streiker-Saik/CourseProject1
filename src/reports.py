@@ -83,3 +83,8 @@ def spending_by_category(transactions: pd.DataFrame, category: str, date: Option
 #     # category = transactions.Категория.unique()
 #     # print(category)
 #     print(spending_by_category(transactions, "Аптеки", "2020-01-01"))
+#     import csv
+#     with open('spending_by_category.csv', encoding="UTF-8") as file:
+#         reader = csv.reader(file, delimiter='\t')
+#         for row in reader:
+#             print(row)

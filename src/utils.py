@@ -340,7 +340,7 @@ def generator_top_five_transactions(df: pd.DataFrame) -> List[Dict[str, Any]]:
 
     try:
         columns = df.loc[:, ["Дата платежа", "Сумма платежа", "Категория", "Описание"]]
-        top_five_transactions = columns.sort_values(by="Сумма платежа", ascending=False).head(5)
+        top_five_transactions = columns.sort_values(by="Сумма платежа", ascending=True).head(5)
         result = top_five_transactions.to_dict(orient="records")
         # {"Дата платежа": '16.01.2020',
         # "Сумма платежа": 3100.0,
@@ -353,7 +353,7 @@ def generator_top_five_transactions(df: pd.DataFrame) -> List[Dict[str, Any]]:
         for category in result:
             top_transactions = {
                 "date": category["Дата платежа"],
-                "amount": category["Сумма платежа"],
+                "amount": abs(round(category["Сумма платежа"], 2)),
                 "category": category["Категория"],
                 "description": category["Описание"],
             }
@@ -392,7 +392,7 @@ def generator_top_five_transactions(df: pd.DataFrame) -> List[Dict[str, Any]]:
 #     top_transactions = generator_top_five_transactions(filter_df)
 #     print(top_transactions)
 #
-#     print(get_apilayer_convert_rates(code_to = "RUB", code_from = "USD"))
+#     print(get_apilayer_convert_rates(date_obj, code_to = "RUB", code_from = "USD"))
 #     print(get_currencies_rates_in_rub(["USD", "EUR", "CNY"]))
 #     stocks_list = user_settings[0].get("user_stocks", [])
 #     print(get_stocks_in_usd(stocks_list))
