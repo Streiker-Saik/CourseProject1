@@ -439,7 +439,6 @@ def test_generator_top_five_transactions() -> None:
     assert generator_top_five_transactions(df) == expected
 
 
-#
 def test_generator_top_five_transactions_empty_dataframe() -> None:
     """Тестирование когда DataFrame пустой"""
     df = pd.DataFrame(columns=["Дата платежа", "Сумма платежа", "Категория", "Описание"])

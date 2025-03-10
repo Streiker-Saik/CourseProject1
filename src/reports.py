@@ -1,4 +1,5 @@
 import datetime
+import json
 import logging
 import os
 from functools import wraps
@@ -29,10 +30,15 @@ def report_execution(fail_path: Optional[str] = None) -> Callable:
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             result = func(*args, **kwargs)
+
             if not fail_path:
-                result.to_csv(f"{func.__name__}.csv", index=False, encoding="utf-8", sep="\t")
+                names_path = f"data/{func.__name__}.json"
             else:
-                result.to_csv(fail_path, index=False, encoding="utf-8", sep="/")
+                names_path = fail_path
+
+            with open(names_path, "w", encoding="UTF-8") as file_json:
+                data = json.loads(result)
+                json.dump(data, file_json, indent=4, ensure_ascii=False)
             return result
 
         return wrapper
@@ -41,9 +47,9 @@ def report_execution(fail_path: Optional[str] = None) -> Callable:
 
 
 @report_execution()
-def spending_by_category(transactions: pd.DataFrame, category: str, date: Optional[str] = None) -> pd.DataFrame:
+def spending_by_category(transactions: pd.DataFrame, category: str, date: Optional[str] = None) -> str:
     """Функция принимает DataFrame с транзакциями, название категории и опциональную дату(YYYY-MM-DD).
-    Возвращает траты по заданной категории за последние 90 дней (от переданной даты)"""
+    Возвращает траты по заданной категории за последние 90 дней (от переданной даты) в JSON"""
     reports_logger.info(f"Функция фильтрации DataFrame по {category} началась")
     if not date:
         reports_logger.info("Дата не указана, принимается текущая дата(datetime)")
@@ -72,19 +78,15 @@ def spending_by_category(transactions: pd.DataFrame, category: str, date: Option
         & (transactions["Статус"] == "OK")
         & (transactions["Сумма платежа"] < 0)
         & (transactions["Категория"] == category)
-    ]
+    ].copy()
+
+    # переводим в df дату обратно в строку "DD.MM.YYYY HH:MM:SS", т.к. из df в json не переводит <>
+    filtered_df["Дата операции"] = filtered_df["Дата операции"].apply(lambda x: x.strftime("%d.%m.%Y %H:%M:%S"))
+
     reports_logger.info(f"Функция фильтрации DataFrame по {category} завершена успешно")
-    return filtered_df
 
+    result_list = filtered_df.to_dict(orient="records")
+    result = json.dumps(result_list, ensure_ascii=False)
 
-# if __name__ == "__main__":
-#     file_excel = "../data/operations.xlsx"
-#     transactions = pd.read_excel(file_excel)
-#     # category = transactions.Категория.unique()
-#     # print(category)
-#     print(spending_by_category(transactions, "Аптеки", "2020-01-01"))
-#     import csv
-#     with open('spending_by_category.csv', encoding="UTF-8") as file:
-#         reader = csv.reader(file, delimiter='\t')
-#         for row in reader:
-#             print(row)
+    reports_logger.info("Функция фильтрации DataFrame c преобразованием в JSON - завершена успешно")
+    return result

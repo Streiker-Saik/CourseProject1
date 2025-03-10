@@ -28,15 +28,6 @@ def views_home(date: str, file_operations: str, file_user_settings: str) -> str:
     пользовательским настройкам и выводит JSON файла главной страницы сайта
     """
     views_logger.info("Функция получение JSON файла главной страницы - начата")
-    # if date is None or file_operations is None or file_user_settings is None:
-    #     error_message = "Вводные дынные отсутствуют"
-    #     views_logger.error(error_message)
-    #     raise TypeError(error_message)
-    #
-    # if not all(isinstance(arg, str) for arg in (date, file_operations, file_user_settings)):
-    #     error_message = "Введено не строковое значение"
-    #     views_logger.error(error_message)
-    #     raise TypeError(error_message)
 
     views_logger.info("Использует функцию src.validate_and_format_date")
     date_obj = validate_and_format_date(date)
@@ -81,11 +72,3 @@ def views_home(date: str, file_operations: str, file_user_settings: str) -> str:
     result = json.dumps(data_output, indent=4, ensure_ascii=False)
     views_logger.info("Функция получение JSON файла главной страницы - выполнена")
     return result
-
-
-# if __name__ == "__main__":
-#     date = "2021-12-21 12:00:00"
-#     file_operations = "../data/operations.xlsx"
-#     file_user_settings = "../user_settings.json"
-#     result = views_home(date, file_operations, file_user_settings)
-#     print(result)

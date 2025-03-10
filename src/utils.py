@@ -3,11 +3,14 @@ import json
 import logging
 import os
 import re
+from pathlib import Path
 from typing import Any, Dict, List, cast
 
 import pandas as pd
 import requests
 from dotenv import load_dotenv
+
+BASEDIR = Path(__file__).resolve().parent.parent
 
 # создание абсолютного пути из относительного
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -40,7 +43,7 @@ def validate_and_format_date(date: str) -> datetime.datetime:
 
 def greeting_from_time_to_time(date_obj: datetime.datetime) -> str:
     """Функция выводит сообщение приветствия согласно времени суток"""
-    # try:
+
     hours = date_obj.hour
     utils_logger.info(f"Выполняется функция приветствия в {hours} часов")
     if 0 <= hours < 6:
@@ -53,11 +56,6 @@ def greeting_from_time_to_time(date_obj: datetime.datetime) -> str:
         message = "Добрый вечер"
     utils_logger.info(f"Функция приветствия в {hours} часов выполнена")
     return message
-
-    # except Exception as exc_info:
-    #     error_message = f"Что-то пошло не так. {str(exc_info)}"
-    #     utils_logger.error(error_message)
-    #     raise Exception(error_message)
 
 
 def get_transactions_from_excel(file_path: str) -> List[Dict[str, Any]]:
@@ -80,11 +78,6 @@ def get_transactions_from_excel(file_path: str) -> List[Dict[str, Any]]:
         error_message = f"Файл '{file_path}' - не найден"
         utils_logger.error(error_message)
         raise FileNotFoundError(error_message)
-
-    # except Exception as exc_info:
-    #     error_message = f"Что-то пошло не так при чтении {file_path}. Ошибка {exc_info}"
-    #     utils_logger.error(error_message)
-    #     raise Exception(error_message)
 
 
 def get_user_settings_from_json(file_path: str) -> List[Dict[str, Any]]:
@@ -111,11 +104,6 @@ def get_user_settings_from_json(file_path: str) -> List[Dict[str, Any]]:
         utils_logger.error(f"Невозможно преобразовать json дынные: {exc_info}")
         return []
 
-    # except Exception as exc_info:
-    #     error_message = f"Что-то пошло не так при чтении {file_path}. Ошибка {exc_info}"
-    #     utils_logger.error(error_message)
-    #     raise Exception(error_message)
-
 
 def get_apilayer_convert_rates(
     date_obj: datetime.datetime, *, code_to: str, code_from: str, amount: str = "1"
@@ -123,7 +111,7 @@ def get_apilayer_convert_rates(
     """Функция курса валюты, Exchange Rates Data API GET/convert:
     https://apilayer.com/marketplace/exchangerates_data-api"""
 
-    load_dotenv("../.env")
+    load_dotenv(BASEDIR / ".env")
     api_key = os.getenv("APILAYER_EDAPI_KEY")
 
     payload: Dict[Any, Any] = {}
@@ -138,8 +126,6 @@ def get_apilayer_convert_rates(
     try:
         utils_logger.info("Выполняем запрос у Exchange Rates Data API GET/convert")
         response = requests.request("GET", url, headers=headers, data=payload)
-        # status_code = response.status_code
-        # result = response.text
 
         if response.status_code != 200:
             error_message = f"Ошибка API: {response.status_code} - {response.text}"
@@ -156,11 +142,6 @@ def get_apilayer_convert_rates(
         utils_logger.error(error_message)
         raise Exception(error_message)
 
-    # except Exception as exc_info:
-    #     error_message = f"Что-то пошло не так. {str(exc_info)}"
-    #     utils_logger.error(error_message)
-    #     raise Exception(error_message)
-
 
 def get_currencies_rates_in_rub(
     currencies: List[str], date_obj: datetime.datetime = datetime.datetime.now()
@@ -170,7 +151,6 @@ def get_currencies_rates_in_rub(
         utils_logger.info("Список пуст")
         return []
 
-    # try:
     utils_logger.info(f"Началась функция перевода валют '{currencies}'")
     result_dict = []
     for currency in currencies:
@@ -182,18 +162,13 @@ def get_currencies_rates_in_rub(
     utils_logger.info(f"Функция с валютами '{currencies}' прошла успешно")
     return result_dict
 
-    # except Exception as exc_info:
-    #     error_message = f"Что-то пошло не так. {str(exc_info)}"
-    #     utils_logger.error(error_message)
-    #     raise Exception(error_message)
-
 
 def filter_operations_by_month_and_date(df: pd.DataFrame, date_obj: datetime.datetime) -> pd.DataFrame:
     """
     Функция принимает DataFrame и дату: фильтрует операции по дате с 1 числа по дату, так же операции по статусу Ok.
     Возвращает отфильтрованный DataFrame
     """
-    # try:
+
     utils_logger.info("Началась функция фильтрации")
     year = date_obj.year
     month = date_obj.month
@@ -204,29 +179,6 @@ def filter_operations_by_month_and_date(df: pd.DataFrame, date_obj: datetime.dat
     filtered_df = df[(df["Дата операции"] >= date_from) & (df["Дата операции"] <= date_to) & (df["Статус"] == "OK")]
     utils_logger.info("Фильтрация прошла успешно")
     return filtered_df
-
-    # except Exception as exc_info:
-    #     error_message = f"Что-то пошло не так. {str(exc_info)}"
-    #     utils_logger.error(error_message)
-    #     raise Exception(error_message)
-
-
-# def filter_operations_by_month_and_date(
-#     operations: List[Dict[str, Any]], date_obj: datetime.datetime
-# ) -> List[Dict[str, Any]]:
-#     """Функция принимает операции и дату запроса, выводит список транзакций с 1 числа месяца по введенное число"""
-#     # определяем месяц и год запроса
-#     year = date_obj.year
-#     month = date_obj.month
-#     # дата начала и дата конца фильтрации
-#     date_to = date_obj
-#     date_from = datetime.datetime(year, month, 1)
-#     # "Дата операции": "31.12.2021 16:44:00"
-#     return [
-#         operation
-#         for operation in operations
-#         if date_from <= datetime.datetime.strptime(operation["Дата операции"], "%d.%m.%Y %H:%M:%S") <= date_to
-#     ]
 
 
 def generate_card_report(df: pd.DataFrame) -> List[Dict[str, Any]]:
@@ -259,17 +211,12 @@ def generate_card_report(df: pd.DataFrame) -> List[Dict[str, Any]]:
     except KeyError as exc_info:
         raise ValueError(f"Отсутствует необходимый столбец: {str(exc_info)}") from exc_info
 
-    # except Exception as exc_info:
-    #     error_message = f"Что-то пошло не так. {str(exc_info)}"
-    #     utils_logger.error(error_message)
-    #     raise Exception(error_message)
-
 
 def get_stocks_price(*, stocks: str) -> float:
     """Функция курса акций за предыдущий день, Alpha Vantage:
     https://www.alphavantage.co/"""
     utils_logger.info("Выполняем запрос у Exchange Rates Data API GET/convert")
-    load_dotenv("../.env")
+    load_dotenv(BASEDIR / ".env")
     api_key = os.getenv("ALPHAVANTAGE_KEY")
 
     url = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={stocks}&apikey={api_key}"
@@ -304,11 +251,6 @@ def get_stocks_price(*, stocks: str) -> float:
         utils_logger.error(error_message)
         raise Exception(error_message)
 
-    # except Exception as exc_info:
-    #     error_message = f"Что-то пошло не так. {str(exc_info)}"
-    #     utils_logger.error(error_message)
-    #     raise Exception(error_message)
-
 
 def get_stocks_in_usd(stocks_list: List[str]) -> List[Dict[str, Any]]:
     """Функция принимает список акций и возвращает курсы акции в долларах(последнее закрытие дня), с запросом в API"""
@@ -326,11 +268,6 @@ def get_stocks_in_usd(stocks_list: List[str]) -> List[Dict[str, Any]]:
     utils_logger.info(f"Функция с акциями '{stocks_list}' - прошла успешно")
     return result
 
-    # except Exception as exc_info:
-    #     error_message = f"Что-то пошло не так. {str(exc_info)}"
-    #     utils_logger.error(error_message)
-    #     raise Exception(error_message)
-
 
 def generator_top_five_transactions(df: pd.DataFrame) -> List[Dict[str, Any]]:
     """Топ-5 транзакций по сумме платежа."""
@@ -340,7 +277,6 @@ def generator_top_five_transactions(df: pd.DataFrame) -> List[Dict[str, Any]]:
 
     try:
         columns = df.loc[:, ["Дата платежа", "Сумма платежа", "Категория", "Описание"]]
-        # top_five_transactions = columns.sort_values(by="Сумма платежа", ascending=True).head(5)
         top_five_transactions = columns.loc[columns["Сумма платежа"].abs().sort_values(ascending=False).index].head(5)
         result = top_five_transactions.to_dict(orient="records")
         # {"Дата платежа": '16.01.2020',
@@ -363,42 +299,3 @@ def generator_top_five_transactions(df: pd.DataFrame) -> List[Dict[str, Any]]:
 
     except KeyError as exc_info:
         raise ValueError(f"Отсутствует необходимый столбец: {str(exc_info)}") from exc_info
-
-    # except Exception as exc_info:
-    #     error_message = f"Что-то пошло не так. {str(exc_info)}"
-    #     utils_logger.error(error_message)
-    #     raise Exception(error_message)
-
-
-# if __name__ == "__main__":
-#     date = "2020-01-05 06:00:00"
-#     print(validate_and_format_date(date))
-#     date_obj = datetime.datetime(2020, 1, 5, 6, 0, 0)
-#     print(greeting_from_time_to_time(date_obj))
-#
-#     file_path_excel = "../data/operations.xlsx"
-#     print(get_transactions_from_excel(file_path_excel)[0])
-#
-#     file_path_json = "../user_settings.json"
-#     user_settings = get_user_settings_from_json(file_path_json)
-#     print(user_settings)
-#
-#     df = pd.DataFrame(get_transactions_from_excel(file_path_excel))
-#     filter_df = filter_operations_by_month_and_date(df, date_obj)
-#     print(filter_df)
-#
-#     cards = generate_card_report(filter_df)
-#     print(cards)
-#
-#     top_transactions = generator_top_five_transactions(filter_df)
-#     print(top_transactions)
-#
-#     print(get_apilayer_convert_rates(date_obj, code_to = "RUB", code_from = "USD"))
-#     print(get_currencies_rates_in_rub(["USD", "EUR", "CNY"]))
-#     stocks_list = user_settings[0].get("user_stocks", [])
-#     print(get_stocks_in_usd(stocks_list))
-#
-#     print(get_stocks_price(stocks="AAPL"))
-#     print(get_stocks_in_usd(["AAPL", "AMZN", "GOOGL"]))
-#     currencies = user_settings[0].get("user_currencies", [])
-#     print(get_currencies_rates_in_rub(currencies))

@@ -3,7 +3,6 @@ import datetime
 import json
 import logging
 import os
-import re
 from typing import Any, Dict, List
 
 import pandas as pd
@@ -28,14 +27,6 @@ def get_top_three_category(data: List[Dict[str, Any]], year: int, month: int) ->
     выводит JSON строку 3 лучших категорий
     """
     services_logger.info("Функция получения топ 3 категории начата")
-    # if data is None or year is None or month is None:
-    #     raise TypeError("Вводные дынные отсутствуют")
-    #
-    # if not isinstance(year, int) or not isinstance(month, int):
-    #     raise TypeError("Введено не числовое значение")
-    #
-    # if month < 1 or month > 12:
-    #     raise ValueError("Месяц должен быть в диапазоне от 1 до 12")
 
     df = pd.DataFrame(data)
     cashback = 0.1  # 10%
@@ -55,7 +46,8 @@ def get_top_three_category(data: List[Dict[str, Any]], year: int, month: int) ->
     # переводим в df дату (DD.MM.YYYY HH:MM:SS) в datetime
     df["Дата операции"] = pd.to_datetime(df["Дата операции"], dayfirst=True)
 
-    # фильтруем транзакции за период, со статусом OK, только траты, исключая категории ["Другое", "Наличные", "Переводы"]
+    # фильтруем транзакции за период, со статусом OK, только траты, исключая категории
+    # ["Другое", "Наличные", "Переводы"]
     filtered_df_by_date = df[
         (df["Дата операции"] >= date_from)
         & (df["Дата операции"] <= date_to)
@@ -67,7 +59,13 @@ def get_top_three_category(data: List[Dict[str, Any]], year: int, month: int) ->
     ]
 
     # Группируем по категориям и суммируем, первые 3
-    group_cate_category = filtered_df_by_date.groupby("Категория").agg({"Сумма платежа": "sum"}).abs().sort_values(by="Сумма платежа", ascending=False).head(3)
+    group_cate_category = (
+        filtered_df_by_date.groupby("Категория")
+        .agg({"Сумма платежа": "sum"})
+        .abs()
+        .sort_values(by="Сумма платежа", ascending=False)
+        .head(3)
+    )
 
     # Выводим в абсолютных значения, процент cashback, с двумя знаками после запятой
     group_cate_category["Сумма платежа"] = (group_cate_category["Сумма платежа"].abs() * cashback).round(2)
@@ -81,28 +79,3 @@ def get_top_three_category(data: List[Dict[str, Any]], year: int, month: int) ->
     result = json.dumps(data_output, indent=4, ensure_ascii=False)
     services_logger.info("Функция получения топ 3 категории выполнена")
     return result
-
-
-# if __name__ == "__main__":
-#     from src.utils import get_transactions_from_excel
-#     file_excel = "../data/operations.xlsx"
-#     transactions = get_transactions_from_excel(file_excel)
-#     # transactions = [{"Дата операции": "10.05.2018 00:00:00",
-#     #                  "Статус": "FAILED",
-#     #                  "Сумма платежа": -100,
-#     #                  "Категория": "Аптеки"},
-#     #                 {"Дата операции": "10.05.2018 00:00:00",
-#     #                  "Статус": "OK",
-#     #                  "Сумма платежа": -100,
-#     #                  "Категория": "Аптеки"},
-#     #                 {"Дата операции": "10.06.2018 00:00:00",
-#     #                  "Статус": "OK",
-#     #                  "Сумма платежа": -1500,
-#     #                  "Категория": "ООО ДОМ"},
-#     #                 {"Дата операции": "10.06.2018 00:00:00",
-#     #                  "Статус": "OK",
-#     #                  "Сумма платежа": -1000,
-#     #                  "Категория": "ООО ДОМ"}
-#     #                 ]
-#     result = get_top_three_category(transactions, 2018, 5)
-#     print(result)
