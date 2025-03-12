@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from src.reports import spending_by_category
+from src.reports import spending_by_category, spending_by_weekday
 from src.services import get_top_three_category
 from src.utils import get_transactions_from_excel
 from src.views import views_home
@@ -19,15 +19,20 @@ def main() -> None:
     views = views_home(date, file_operations, file_user_settings)
     print(views)
 
-    print("Сервисы: Выгодные категории повышенного кешбэка")
+    print("Сервисы: Выгодные категории повышенного кешбэка(сколько на каждой категории можно заработать кешбэка 10 %)")
     transactions = get_transactions_from_excel(file_operations)
     top_three_category = get_top_three_category(transactions, 2020, 12)
     print(top_three_category)
 
-    print("Отчеты: Траты по категории(сколько на каждой категории можно заработать кешбэка 10 %)")
+    print("Отчеты:")
+    print("Траты по категории.")
     transactions_df = pd.DataFrame(transactions)
     three_month_expense_category = spending_by_category(transactions_df, "Аптеки", date)
     print(three_month_expense_category)
+    print("Среднее количество трат в день недели.")
+    spending_per_day_week = spending_by_weekday(transactions_df, date)
+    print(spending_per_day_week)
+
 
 
 if __name__ == "__main__":

@@ -10,7 +10,7 @@
 - - Курс валют.
 - - Стоимость акций
 - Сервисы: Выгодные категории повышенного кешбэка
-- Отчеты: Траты по категории
+- Отчеты: Траты по категории, Траты по дням недели
 
 ## Проверить версию Python:
 
@@ -292,9 +292,17 @@ get_top_three_category(transactions, 2018, 5)
 ```
 ---
 Модуль src.reports.py
+- calculate_date_range
+- - принимает опциональную дату(YYYY-MM-DD) и количество дней(по умолчанию 90)
+- - Возвращает кортеж datetime: даты (по умолчанию текущей) и даты, которая на указанное количество дней назад).
+```
+calculate_date_range("2018-05-10")
+>>>
+(datetime.datetime(2018, 5, 10, 0, 0), datetime.datetime(2018, 2, 9, 0, 0))
+```
 - spending_by_category
 - - принимает DataFrame с транзакциями, название категории и опциональную дату(YYYY-MM-DD)
-- - возвращает JSON строку траты по заданной категории за последние 90 дней (от переданной даты)
+- - возвращает JSON строку - траты по заданной категории за последние 90 дней (от переданной даты)
 ```
 transactions = get_transactions_from_excel("../data/operations.xlsx")
 transactions_df = pd.DataFrame(transactions)
@@ -302,19 +310,29 @@ spending_by_category(transactions_df, "Аптеки", "2020-01-01")
 >>>
 '[{"Дата операции": "21.11.2019 11:07:06", "Дата платежа": "23.11.2019",...}, ...]'
 ```
+- 
+- - принимает DataFrame с транзакциями и опциональную дату(YYYY-MM-DD)
+- - возвращает JSON строку - средние траты за каждый день недели за последние 90 дней (от переданной даты)
+```
+transactions = get_transactions_from_excel("../data/operations.xlsx")
+transactions_df = pd.DataFrame(transactions)
+spending_by_category(transactions_df, "2020-01-01")
+>>>
+'{"Monday": 1322.72, "Tuesday": 1307.09, "Wednesday": 185.56, "Thursday": 197.42, "Friday": 377.2, "Saturday": 505.96, "Sunday": 305.62}'
+```
+Модуль src.decorators.py
 - report_execution (декоратор)
 - - принимает путь к файлу 
-(по умолчанию и называется "data/имя_функции".json)
+(по умолчанию и называется "data/имя_функции.json")
 - - выводящий результат выполнения функции в файл *.json"""
 ```
-from src.utils import get_transactions_from_excel
-    transactions = get_transactions_from_excel("../data/operations.xlsx")
-    transactions_df = pd.DataFrame(transactions)
-    spending_by_category(transactions_df, "Аптеки", "2020-01-01")
+transactions = get_transactions_from_excel("../data/operations.xlsx")
+transactions_df = pd.DataFrame(transactions)
+spending_by_category(transactions_df, "Аптеки", "2020-01-01")
 >>>  
 with open('../data/spending_by_category.json', "r", encoding="UTF-8") as file_json:
-        data = json.load(file_json)
-        print(data)
+    data = json.load(file_json)
+    print(data)
 [{'Дата операции': '21.11.2019 11:07:06', 'Дата платежа': '23.11.2019', 'Номер карты': '*4556', ...},...]
 ```
 
