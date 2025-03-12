@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from src.reports import spending_by_category, spending_by_weekday
+from src.reports import spending_by_category, spending_by_weekday, spending_by_workday
 from src.services import get_top_three_category
 from src.utils import get_transactions_from_excel
 from src.views import views_home
@@ -25,14 +25,16 @@ def main() -> None:
     print(top_three_category)
 
     print("Отчеты:")
-    print("Траты по категории.")
+    print("- Траты по категории.")
     transactions_df = pd.DataFrame(transactions)
     three_month_expense_category = spending_by_category(transactions_df, "Аптеки", date)
     print(three_month_expense_category)
-    print("Среднее количество трат в день недели.")
+    print("- Среднее количество трат в день недели.")
     spending_per_day_week = spending_by_weekday(transactions_df, date)
     print(spending_per_day_week)
-
+    print("- Среднее количество траты в рабочий и выходной")
+    spending_per_day_work_and_weekend = spending_by_workday(transactions_df, date)
+    print(spending_per_day_work_and_weekend)
 
 
 if __name__ == "__main__":

@@ -72,10 +72,10 @@ def spending_by_category(transactions: pd.DataFrame, category: str, date: Option
         & (transactions["Категория"] == category)
     ].copy()
 
-    # переводим в df дату обратно в строку "DD.MM.YYYY HH:MM:SS", т.к. из df в json не переводит <>
+    # переводим в df дату обратно в строку "DD.MM.YYYY HH:MM:SS", т.к. из df в json не переводит <Time>
     filtered_df["Дата операции"] = filtered_df["Дата операции"].apply(lambda x: x.strftime("%d.%m.%Y %H:%M:%S"))
 
-    reports_logger.info(f"Функция фильтрации DataFrame по {category} завершена успешно")
+    reports_logger.info(f"DataFrame отфильтрован по столбцам: {required_columns}")
 
     result_list = filtered_df.to_dict(orient="records")
     result = json.dumps(result_list, ensure_ascii=False)
@@ -88,7 +88,7 @@ def spending_by_category(transactions: pd.DataFrame, category: str, date: Option
 def spending_by_weekday(transactions: pd.DataFrame, date: Optional[str] = None) -> str:
     """Функция принимает DataFrame с транзакциями и опциональную дату(YYYY-MM-DD).
     Возвращает средние траты за каждый день недели за последние 90 дней (от переданной даты) в JSON"""
-    reports_logger.info(f"Функция фильтрации DataFrame по {date} началась")
+    reports_logger.info(f"Функция получение средних трат на каждый день недели по {date} началась")
     date_to, date_from = calculate_date_range(date, 90)
 
     # Проверяем наличие необходимых столбцов
@@ -109,6 +109,8 @@ def spending_by_weekday(transactions: pd.DataFrame, date: Optional[str] = None) 
         & (transactions["Статус"] == "OK")
         & (transactions["Сумма платежа"] < 0)
     ].copy()
+    reports_logger.info(f"DataFrame отфильтрован по столбцам: {required_columns}")
+
     # добавляем столбец с днями недели
     filtered_df["День недели"] = filtered_df["Дата операции"].apply(lambda x: x.strftime("%A"))
 
@@ -121,5 +123,58 @@ def spending_by_weekday(transactions: pd.DataFrame, date: Optional[str] = None) 
     for key, value in result_dict.items():
         output_dict[key] = value
     result = json.dumps(output_dict, ensure_ascii=False)
+    reports_logger.info(
+        "Функция получение средних трат на каждый день недели, c преобразованием в JSON - завершена успешно"
+    )
+    return result
 
+
+@report_execution()
+def spending_by_workday(transactions: pd.DataFrame, date: Optional[str] = None) -> str:
+    """Функция принимает DataFrame с транзакциями и опциональную дату(YYYY-MM-DD).
+    Возвращает средние траты в рабочий и в выходной день за последние 90 дней (от переданной даты) в JSON"""
+    reports_logger.info(f"Функция получение средних трат на рабочие и выходные по {date} началась")
+    date_to, date_from = calculate_date_range(date, 90)
+
+    # Проверяем наличие необходимых столбцов
+    required_columns = ["Дата операции", "Статус", "Сумма платежа"]
+    missing_columns = [column for column in required_columns if column not in transactions.columns]
+    if missing_columns:
+        error_message = f"DataFrame должен содержать столбцы: {missing_columns}"
+        reports_logger.error(error_message)
+        raise ValueError(error_message)
+
+    # переводим в df дату (DD.MM.YYYY) в datetime
+    transactions["Дата операции"] = pd.to_datetime(transactions["Дата операции"], dayfirst=True)
+
+    # фильтруем транзакции за период, со статусом OK, только траты и введенную категорию
+    filtered_df = transactions[
+        (transactions["Дата операции"] >= date_from)
+        & (transactions["Дата операции"] <= date_to)
+        & (transactions["Статус"] == "OK")
+        & (transactions["Сумма платежа"] < 0)
+    ].copy()
+    reports_logger.info(f"DataFrame отфильтрован по столбцам: {required_columns}")
+
+    # добавляем столбец с днями недели
+    filtered_df["Рабочий/Выходной"] = filtered_df["Дата операции"].apply(
+        lambda x: (
+            "working day"
+            if x.strftime("%A") in ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+            else "weekend"
+        )
+    )
+
+    # находим средние растраты по дням недели
+    grouped_date = filtered_df.groupby("Рабочий/Выходной")["Сумма платежа"].mean().abs().round(2)
+    result_dict = grouped_date.to_dict()
+
+    # Выставляем нормальную последовательность
+    output_dict = {"working day": 0, "weekend": 0}
+    for key, value in result_dict.items():
+        output_dict[key] = value
+    result = json.dumps(output_dict, ensure_ascii=False)
+    reports_logger.info(
+        "Функция получение средних трат на рабочие и выходные, c преобразованием в JSON - завершена успешно"
+    )
     return result
