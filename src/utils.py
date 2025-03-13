@@ -163,21 +163,83 @@ def get_currencies_rates_in_rub(
     return result_dict
 
 
+def filter_operations_by_week_and_date(df: pd.DataFrame, date_obj: datetime.datetime) -> pd.DataFrame:
+    """
+    Функция принимает DataFrame и дату: фильтрует операции по дате с начала недели по дату,
+    так же операции по статусу Ok. Возвращает отфильтрованный DataFrame
+    """
+    utils_logger.info("Началась функция фильтрации")
+    week_day = date_obj.weekday()
+    date_to = date_obj
+    date_from = (date_obj - datetime.timedelta(days=week_day)).replace(hour=0, minute=0, second=0, microsecond=0)
+
+    # переводим дату (DD.MM.YYYY HH:MM:SS) в datetime
+    df["Дата операции"] = pd.to_datetime(df["Дата операции"], dayfirst=True)
+    filtered_df = df[(df["Дата операции"] >= date_from) & (df["Дата операции"] <= date_to) & (df["Статус"] == "OK")]
+    utils_logger.info("Фильтрация прошла успешно")
+    return filtered_df
+
+
 def filter_operations_by_month_and_date(df: pd.DataFrame, date_obj: datetime.datetime) -> pd.DataFrame:
     """
     Функция принимает DataFrame и дату: фильтрует операции по дате с 1 числа по дату, так же операции по статусу Ok.
     Возвращает отфильтрованный DataFrame
     """
-
     utils_logger.info("Началась функция фильтрации")
-    year = date_obj.year
-    month = date_obj.month
     date_to = date_obj
-    date_from = datetime.datetime(year, month, 1)
+    date_from = date_obj.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     # переводим дату (DD.MM.YYYY HH:MM:SS) в datetime
     df["Дата операции"] = pd.to_datetime(df["Дата операции"], dayfirst=True)
     filtered_df = df[(df["Дата операции"] >= date_from) & (df["Дата операции"] <= date_to) & (df["Статус"] == "OK")]
     utils_logger.info("Фильтрация прошла успешно")
+    return filtered_df
+
+
+def filter_operations_by_year_and_date(df: pd.DataFrame, date_obj: datetime.datetime) -> pd.DataFrame:
+    """
+    Функция принимает DataFrame и дату: фильтрует операции по дате с 1 дня года числа по дату,
+    так же операции по статусу Ok. Возвращает отфильтрованный DataFrame
+    """
+    utils_logger.info("Началась функция фильтрации")
+    date_to = date_obj
+    date_from = date_obj.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+    # переводим дату (DD.MM.YYYY HH:MM:SS) в datetime
+    df["Дата операции"] = pd.to_datetime(df["Дата операции"], dayfirst=True)
+    filtered_df = df[(df["Дата операции"] >= date_from) & (df["Дата операции"] <= date_to) & (df["Статус"] == "OK")]
+    utils_logger.info("Фильтрация прошла успешно")
+    return filtered_df
+
+
+def filter_operations_by_date(df: pd.DataFrame, date_obj: datetime.datetime, data_range: str) -> pd.DataFrame:
+    """
+    Функция фильтрует данные по переданному диапазону
+    :param df: транзакций в (DataFrame)
+    :param date_obj: дата (datetime)
+    :param data_range: диапазон фильтрации (str):
+        W - неделя,
+        M - месяц,
+        Y - год,
+        ALL - все данные до указанной даты
+    :return: фильтрованный DataFrame в указанном диапазоне
+    """
+    utils_logger.info(f"Фильтрация в диапазоне '{data_range}' начата")
+    if data_range == "M":  # период месяц
+        utils_logger.info("Фильтрация - с 1 дня месяца по указанную дату")
+        filtered_df = filter_operations_by_month_and_date(df, date_obj)
+    elif data_range == "W":  # период неделя
+        utils_logger.info("Фильтрация - с 1 дня недели по указанную дату")
+        filtered_df = filter_operations_by_week_and_date(df, date_obj)
+    elif data_range == "Y":  # период год
+        utils_logger.info("Фильтрация - с 1 дня года по указанную дату")
+        filtered_df = filter_operations_by_year_and_date(df, date_obj)
+    elif data_range == "ALL":  # все
+        utils_logger.info("Фильтрация по дате - не производилась. Только по статусу OK")
+        df["Дата операции"] = pd.to_datetime(df["Дата операции"], dayfirst=True)
+        filtered_df = df[(df["Статус"] == "OK")]
+    else:
+        error_message = f"Данного диапазона '{data_range}' - не поддерживается"
+        utils_logger.error(error_message)
+        raise ValueError(error_message)
     return filtered_df
 
 
@@ -299,3 +361,13 @@ def generator_top_five_transactions(df: pd.DataFrame) -> List[Dict[str, Any]]:
 
     except KeyError as exc_info:
         raise ValueError(f"Отсутствует необходимый столбец: {str(exc_info)}") from exc_info
+
+
+if __name__ == "__main__":
+    date_obj = datetime.datetime.strptime("2025-03-02", "%Y-%m-%d")
+    week_day = date_obj.weekday()
+    date_to = date_obj
+    date_from = date_obj - datetime.timedelta(week_day)
+
+    print(f"{date_from}-{date_to}")
+    pass

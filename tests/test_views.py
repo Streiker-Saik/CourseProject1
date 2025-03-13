@@ -62,7 +62,6 @@ def test_views_home(
         {"stock": "MSFT", "price": 401.02},
         {"stock": "TSLA", "price": 279.1},
     ]
-    # .return_value =
 
     expected_output = {
         "greeting": "Добрый день",

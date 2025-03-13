@@ -9,10 +9,11 @@ import pandas as pd
 import pytest
 import requests
 
-from src.utils import (filter_operations_by_month_and_date, generate_card_report, generator_top_five_transactions,
-                       get_apilayer_convert_rates, get_currencies_rates_in_rub, get_stocks_in_usd, get_stocks_price,
-                       get_transactions_from_excel, get_user_settings_from_json, greeting_from_time_to_time,
-                       validate_and_format_date)
+from src.utils import (filter_operations_by_date, filter_operations_by_month_and_date,
+                       filter_operations_by_week_and_date, filter_operations_by_year_and_date, generate_card_report,
+                       generator_top_five_transactions, get_apilayer_convert_rates, get_currencies_rates_in_rub,
+                       get_stocks_in_usd, get_stocks_price, get_transactions_from_excel, get_user_settings_from_json,
+                       greeting_from_time_to_time, validate_and_format_date)
 
 
 @pytest.mark.parametrize(
@@ -267,26 +268,139 @@ def test_get_currencies_rates_in_rub_empty_list() -> None:
     assert result == []
 
 
-def test_filter_operations_by_month_and_date() -> None:
+def test_filter_operations_by_week_and_date(transactions_df_days: pd.DataFrame) -> None:
     """Тестирование правильно ли функция фильтрует DataFrame"""
-    df = pd.DataFrame(
-        {
-            "Дата операции": pd.to_datetime(
-                ["10.05.2018 00:00:00", "10.06.2018 00:00:00", "01.06.2018 00:00:00"], dayfirst=True
-            ),
-            "Статус": ["OK", "FAILED", "OK"],
-        }
-    )
 
     expected = pd.DataFrame(
-        {"Дата операции": pd.to_datetime(["01.06.2018 00:00:00"], dayfirst=True), "Статус": ["OK"]}
+        {
+            "Дата операции": pd.to_datetime(["10.03.2025 00:01:00", "13.03.2025 00:00:00"], dayfirst=True),
+            "Статус": ["OK", "OK"],
+        }
     )
-    date_obj = datetime.datetime(2018, 6, 10, 0, 0)
+    date_obj = datetime.datetime(2025, 3, 13, 12, 0)
 
-    result = filter_operations_by_month_and_date(df, date_obj).reset_index(drop=True)
+    result = filter_operations_by_week_and_date(transactions_df_days, date_obj).reset_index(drop=True)
 
     # сравнение с помощью pandas
     pd.testing.assert_frame_equal(result, expected)
+
+
+def test_filter_operations_by_month_and_date(transactions_df_days: pd.DataFrame) -> None:
+    """Тестирование правильно ли функция фильтрует DataFrame"""
+
+    expected = pd.DataFrame(
+        {
+            "Дата операции": pd.to_datetime(
+                ["01.03.2025 00:00:00", "10.03.2025 00:01:00", "13.03.2025 00:00:00"], dayfirst=True
+            ),
+            "Статус": ["OK", "OK", "OK"],
+        }
+    )
+    date_obj = datetime.datetime(2025, 3, 13, 12, 0)
+
+    result = filter_operations_by_month_and_date(transactions_df_days, date_obj).reset_index(drop=True)
+
+    # сравнение с помощью pandas
+    pd.testing.assert_frame_equal(result, expected)
+
+
+def test_filter_operations_by_year_and_date(transactions_df_days: pd.DataFrame) -> None:
+    """Тестирование правильно ли функция фильтрует DataFrame"""
+
+    expected = pd.DataFrame(
+        {
+            "Дата операции": pd.to_datetime(
+                ["01.01.2025 00:00:00", "01.03.2025 00:00:00", "10.03.2025 00:01:00", "13.03.2025 00:00:00"],
+                dayfirst=True,
+            ),
+            "Статус": ["OK", "OK", "OK", "OK"],
+        }
+    )
+    date_obj = datetime.datetime(2025, 3, 13, 12, 0)
+
+    result = filter_operations_by_year_and_date(transactions_df_days, date_obj).reset_index(drop=True)
+
+    # сравнение с помощью pandas
+    pd.testing.assert_frame_equal(result, expected)
+
+
+@pytest.mark.parametrize(
+    "data_range, expected",
+    [
+        (
+            "W",
+            pd.DataFrame(
+                {
+                    "Дата операции": pd.to_datetime(["10.03.2025 00:01:00", "13.03.2025 00:00:00"], dayfirst=True),
+                    "Статус": ["OK", "OK"],
+                }
+            ),
+        ),
+        (
+            "M",
+            pd.DataFrame(
+                {
+                    "Дата операции": pd.to_datetime(
+                        ["01.03.2025 00:00:00", "10.03.2025 00:01:00", "13.03.2025 00:00:00"], dayfirst=True
+                    ),
+                    "Статус": ["OK", "OK", "OK"],
+                }
+            ),
+        ),
+        (
+            "Y",
+            pd.DataFrame(
+                {
+                    "Дата операции": pd.to_datetime(
+                        ["01.01.2025 00:00:00", "01.03.2025 00:00:00", "10.03.2025 00:01:00", "13.03.2025 00:00:00"],
+                        dayfirst=True,
+                    ),
+                    "Статус": ["OK", "OK", "OK", "OK"],
+                }
+            ),
+        ),
+        (
+            "ALL",
+            pd.DataFrame(
+                {
+                    "Дата операции": pd.to_datetime(
+                        [
+                            "30.12.2024 00:00:00",
+                            "01.01.2025 00:00:00",
+                            "01.03.2025 00:00:00",
+                            "10.03.2025 00:01:00",
+                            "13.03.2025 00:00:00",
+                        ],
+                        dayfirst=True,
+                    ),
+                    "Статус": ["OK", "OK", "OK", "OK", "OK"],
+                }
+            ),
+        ),
+    ],
+)
+def test_filter_operations_by_date(
+    transactions_df_days: pd.DataFrame, data_range: str, expected: pd.DataFrame
+) -> None:
+    """Тестирование правильно ли функция фильтрует DataFrame в зависимости от диапазона"""
+    date_obj = datetime.datetime(2025, 3, 13, 12, 0)
+
+    result = filter_operations_by_date(transactions_df_days, date_obj, data_range).reset_index(drop=True)
+
+    # сравнение с помощью pandas
+    pd.testing.assert_frame_equal(result, expected)
+
+
+def test_filter_operations_crash(
+    transactions_df_days: pd.DataFrame,
+) -> None:
+    """Тестирование с не известным флагом диапазона"""
+    date_obj = datetime.datetime(2025, 3, 13, 12, 0)
+    data_range = "D"
+
+    with pytest.raises(ValueError) as exc_info:
+        filter_operations_by_date(transactions_df_days, date_obj, data_range)
+    assert f"Данного диапазона '{data_range}' - не поддерживается" == str(exc_info.value)
 
 
 def test_generate_card_report(transactions_df: pd.DataFrame) -> None:
