@@ -116,15 +116,6 @@ def test_get_user_settings_from_json_non_existent_file() -> None:
     assert get_user_settings_from_json("non.json") == []
 
 
-@pytest.fixture
-def user_settings() -> List[Dict[str, Any]]:
-    return [
-        {"operationAmount": {"amount": "31957.58", "currency": {"name": "руб.", "code": "RUB"}}},
-        {"operationAmount": {"amount": "8221.37", "currency": {"name": "USD", "code": "USD"}}},
-        {"operationAmount": {"amount": "9824.07", "currency": {"name": "USD", "code": "USD"}}},
-    ]
-
-
 def test_get_user_settings_from_json(user_settings: List[Dict[str, Any]]) -> None:
     """Тест работы функции"""
     file_path = "test.json"
@@ -298,27 +289,23 @@ def test_filter_operations_by_month_and_date() -> None:
     pd.testing.assert_frame_equal(result, expected)
 
 
-def test_generate_card_report() -> None:
+def test_generate_card_report(transactions_df: pd.DataFrame) -> None:
     """Тестирование работы функции на вывод требуемого словаря"""
-    df = pd.DataFrame(
-        {
-            "Номер карты": ["*1234", "*4321", "*1234"],
-            "Сумма платежа": [-10.5, 100.9, -20.55],
-            "Кэшбэк": [1.5, None, 2.5],
-        }
-    )
-    expected = [{"last_digits": "1234", "total_spent": 31.05, "cashback": 0.31}]
-    assert generate_card_report(df) == expected
+    expected = [
+        {"last_digits": "1234", "total_spent": 251.43, "cashback": 2.51},
+        {"last_digits": "4321", "total_spent": 150.5, "cashback": 1.5},
+    ]
+    assert generate_card_report(transactions_df) == expected
 
 
 def test_generate_card_report_empty_dataframe() -> None:
     """Тестирование когда DataFrame пустой"""
-    df = pd.DataFrame(columns=["Номер карты", "Сумма платежа", "Кэшбэк"])
+    df = pd.DataFrame(columns=["Номер карты", "Сумма платежа"])
     assert generate_card_report(df) == []
 
 
 def test_generate_card_report_missing_columns() -> None:
-    df = pd.DataFrame({"Номер карты": ["*1234", "*4321", "*1234"], "Сумма платежа": [-10.5, 100.9, -20.55]})
+    df = pd.DataFrame({"Номер карты": ["*1234", "*4321", "*1234"]})
     with pytest.raises(ValueError) as exc_info:
         generate_card_report(df)
     assert "Отсутствует необходимый столбец" in str(exc_info)

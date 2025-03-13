@@ -189,12 +189,12 @@ def generate_card_report(df: pd.DataFrame) -> List[Dict[str, Any]]:
 
     try:
         filtered_df = df[df["Сумма платежа"] < 0]  # фильтруем только расходы
-        grouped_number_card = filtered_df.groupby("Номер карты").agg({"Сумма платежа": "sum", "Кэшбэк": "sum"})
+        grouped_number_card = filtered_df.groupby("Номер карты").agg({"Сумма платежа": "sum"})
         cards_dict = grouped_number_card.to_dict(orient="index")
-        # [{"*4556": {"Сумма операции": -1776.0, "Кэшбэк": 69.0}, ...]
+        # [{"*4556": {"Сумма операции": -1776.0}, ...]
 
         # переводим данные в формат:
-        # [{"last_digits": "4556", "total_spent": 1776.0, "cashback": 17.76}, ...]
+        # [{"last_digits": "4556", "total_spent": 1776.0}, ...]
         result = []
         for key, value in cards_dict.items():
             last_digits = str(key)[-4:]

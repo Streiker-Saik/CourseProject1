@@ -3,7 +3,7 @@ from pathlib import Path
 import pandas as pd
 
 from src.reports import spending_by_category, spending_by_weekday, spending_by_workday
-from src.services import get_top_three_category
+from src.services import get_profitable_cashback
 from src.utils import get_transactions_from_excel
 from src.views import views_home
 
@@ -21,7 +21,7 @@ def main() -> None:
 
     print("Сервисы: Выгодные категории повышенного кешбэка(сколько на каждой категории можно заработать кешбэка 10 %)")
     transactions = get_transactions_from_excel(file_operations)
-    top_three_category = get_top_three_category(transactions, 2020, 12)
+    top_three_category = get_profitable_cashback(transactions, 2020, 12)
     print(top_three_category)
 
     print("Отчеты:")

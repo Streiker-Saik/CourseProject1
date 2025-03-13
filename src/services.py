@@ -21,12 +21,14 @@ services_logger.addHandler(file_handler)
 services_logger.setLevel(logging.DEBUG)
 
 
-def get_top_three_category(data: List[Dict[str, Any]], year: int, month: int) -> str:
+def get_profitable_cashback(data: List[Dict[str, Any]], year: int, month: int) -> str:
     """
     Функция принимает данные с транзакциями, год и месяц за который проводится анализ,
-    выводит JSON строку 3 лучших категорий
+    выводит JSON строку сколько на каждой категории можно заработать кешбэка 10%
     """
-    services_logger.info("Функция получения топ 3 категории начата")
+    services_logger.info(
+        "Функция получения, сколько на каждой категории можно заработать кешбэка по категориям начата"
+    )
 
     df = pd.DataFrame(data)
     cashback = 0.1  # 10%
@@ -64,7 +66,6 @@ def get_top_three_category(data: List[Dict[str, Any]], year: int, month: int) ->
         .agg({"Сумма платежа": "sum"})
         .abs()
         .sort_values(by="Сумма платежа", ascending=False)
-        .head(3)
     )
 
     # Выводим в абсолютных значения, процент cashback, с двумя знаками после запятой
@@ -77,5 +78,8 @@ def get_top_three_category(data: List[Dict[str, Any]], year: int, month: int) ->
     top_three_category = group_cate_category.to_dict(orient="index")
     data_output = {category: values["Сумма платежа"] for category, values in top_three_category.items()}
     result = json.dumps(data_output, indent=4, ensure_ascii=False)
-    services_logger.info("Функция получения топ 3 категории выполнена")
+    services_logger.info(
+        f"Функция получения, сколько на каждой категории можно заработать кешбэка ({cashback*100}%) "
+        f"по категориям выполнена"
+    )
     return result
