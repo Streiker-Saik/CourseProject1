@@ -67,7 +67,9 @@ poetry add --group dev pytest pytest-cov
 ## Примеры работы функций:
 
 Модуль src.views.py
-- views_home:
+- views_home (использует функции src.utils: validate_and_format_date, get_transactions_from_excel, 
+get_user_settings_from_json, filter_operations_by_month_and_date, greeting_from_time_to_time, generate_card_report,
+generator_top_five_transactions, get_currencies_rates_in_rub, get_stocks_in_usd)
 - - принимает дату("YYYY-MM-DD HH:MM:SS", путь к файлу данных, путь к настройкам пользователя,
 - - возвращает JSON(str) ответ
 ```
@@ -154,6 +156,81 @@ views_home("2021-12-21 12:00:00", "../data/operations.xlsx", "../user_settings.j
         {
             "stock": "TSLA",
             "price": 262.67
+        }
+    ]
+}
+```
+- views_events (использует функции src.utils: validate_and_format_date, get_transactions_from_excel, 
+get_user_settings_from_json, filter_operations_by_date, get_expenses_report, ..., 
+get_currencies_rates_in_rub, get_stocks_in_usd)
+- - принимает дату("YYYY-MM-DD HH:MM:SS", путь к файлу данных, путь к настройкам пользователя, диапазон, необязательный 
+параметр: W - неделя, на которую приходится дата; M - месяц, на который приходится дата (по умолчанию); Y - год, на 
+который приходится дата; ALL - все данные до указанной даты.
+- - возвращает JSON(str) ответ
+```
+views_home("2021-12-21 12:00:00", "../data/operations.xlsx", "../user_settings.json", "W")
+>>>
+{
+    "expenses": {
+        "total_amount": 1726.69,
+        "main": [
+            {
+                "category": "Дом и ремонт",
+                "amount": 1400.0
+            },
+            {
+                "category": "Супермаркеты",
+                "amount": 172.69
+            },
+            {
+                "category": "Фастфуд",
+                "amount": 154.0
+            }
+        ],
+        "transfers_and_cash": []
+    },
+    "income": {
+        "total_amount": 1148.96,
+        "main": [
+            {
+                "category": "Бонусы",
+                "amount": 727.96
+            },
+            {
+                "category": "Различные товары",
+                "amount": 421.0
+            }
+    },
+    "currency_rates": [
+        {
+            "currency": "USD",
+            "rate": 86.09
+        },
+        {
+            "currency": "EUR",
+            "rate": 93.54
+        }
+    ],
+    "stock_prices": [
+        {
+            "stock": "AAPL",
+            "price": 216.98
+        },
+        {
+            "stock": "AMZN",
+            "price": 198.89
+        },
+        {
+            "stock": "GOOGL",
+            "price": 167.11
+        },
+        {
+            "stock": "MSFT",
+            "price": 383.27
+        },
+        {
+            "stock": "TSLA",
+            "price": 248.09
         }
     ]
 }
@@ -335,6 +412,121 @@ generator_top_five_transactions(filter_df)
 {'date': '04.01.2020', 'amount': -149.0, 'category': 'Топливо', 'description': 'Circle K'}, 
 {'date': '06.01.2020', 'amount': -88.0, 'category': 'Супермаркеты', 'description': 'Magazin 25'}]
 ]
+```
+- filter_expenses
+- - принимает DataFrame
+- - возвращает отфильтрованный DataFrame только расходы
+```
+           Дата операции  ... Сумма платежа
+1 2020-01-04 18:22:55  ...          -1123.0
+2 2020-01-01 14:47:42  ...            362.0
+filter_expenses(df)
+>>>
+           Дата операции  ... Сумма платежа
+1 2020-01-04 18:22:55  ...          -1123.0
+```
+- filter_income
+- - принимает DataFrame
+- - возвращает отфильтрованный DataFrame только доходы
+```
+           Дата операции  ... Сумма платежа
+1 2020-01-04 18:22:55  ...          -1123.0
+2 2020-01-01 14:47:42  ...            362.0
+filter_income(df)
+>>>
+           Дата операции  ... Сумма платежа
+2 2020-01-01 14:47:42  ...            362.0
+```
+- calculate_total_amount
+- - принимает DataFrame
+- - возвращает cумму
+```
+           Дата операции  ... Сумма платежа
+1 2020-01-04 18:22:55  ...          -1123.0
+calculate_total_expenses(df)
+>>>
+1123.0
+```
+- get_main_expenses
+- - принимает DataFrame
+- - возвращает сумму основных расходов, первые 7, далее суммирует в "Остальные"
+```
+   Категория    Сумма платежа
+1  Аптеки       -100.5
+2  Наличные     -900.0
+3  Переводы     -550.0
+4  Супермаркеты -453.9
+...
+get_main_expenses(df)
+>>>
+{"category": 'Супермаркеты', "amount": 453.9}
+{"category": 'Аптеки', "amount": 100.5}
+```
+- get_transfers_and_cash
+- - принимает DataFrame
+- - возвращает сумму расходов по переводам и наличным
+```
+   Категория  Сумма платежа
+1  Аптеки     -100.5
+2  Наличные   -900.0
+3  Переводы   -550.0
+...
+get_transfers_and_cash(df)
+>>>
+{"category": 'Наличные', "amount": 900.0}
+{"category": 'Переводы', "amount": 550.0}
+```
+- get_expenses_report (использует функции: filter_expenses, calculate_total_expenses, get_main_expenses, 
+get_transfers_and_cash)
+- - принимает DataFrame
+- - возвращает отчет словарей о расходах
+```    
+get_expenses_report(df)
+   Категория  Сумма платежа
+1  Аптеки     -100.5
+2  Наличные   -900.0
+3  Переводы   -550.0
+>>>
+{
+    "total_amount": 1550.5, 
+    "main": [
+        {"category": 'Аптеки', "amount": 100.5}
+    ], 
+    "transfers_and_cash": [
+        {"category": 'Наличные', "amount": 900.0}
+        {"category": 'Переводы', "amount": 550.0}
+    ]
+}
+```
+- get_main_income
+- - принимает DataFrame
+- - возвращает сумму основных доходов
+```
+   Категория    Сумма платежа
+1  Наличные     1000.0
+2  Переводы     550.0
+...
+get_main_income(df)
+>>>
+{"category": 'Наличные', "amount": 1000.0}
+{"category": 'Переводы', "amount": 550.0}
+```
+- get_income_report (использует функции: filter_income, calculate_total_amount, get_main_income)
+- - принимает DataFrame
+- - возвращает отчет словарей о доходах
+```    
+get_income_report(df)
+   Категория    Сумма платежа
+1  Наличные     1000.0
+2  Переводы     550.0
+>>>
+{
+    "total_amount": 1500.0,
+    "main": [
+        {"category": 'Наличные', "amount": 1000.0}
+        {"category": 'Переводы', "amount": 550.0}
+    ]
+}
 ```
 ---
 Модуль src.services.py

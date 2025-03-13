@@ -9,10 +9,12 @@ import pandas as pd
 import pytest
 import requests
 
-from src.utils import (filter_operations_by_date, filter_operations_by_month_and_date,
-                       filter_operations_by_week_and_date, filter_operations_by_year_and_date, generate_card_report,
-                       generator_top_five_transactions, get_apilayer_convert_rates, get_currencies_rates_in_rub,
-                       get_stocks_in_usd, get_stocks_price, get_transactions_from_excel, get_user_settings_from_json,
+from src.utils import (calculate_total_amount, filter_expenses, filter_income, filter_operations_by_date,
+                       filter_operations_by_month_and_date, filter_operations_by_week_and_date,
+                       filter_operations_by_year_and_date, generate_card_report, generator_top_five_transactions,
+                       get_apilayer_convert_rates, get_currencies_rates_in_rub, get_expenses_report, get_income_report,
+                       get_main_expenses, get_main_income, get_stocks_in_usd, get_stocks_price,
+                       get_transactions_from_excel, get_transfers_and_cash, get_user_settings_from_json,
                        greeting_from_time_to_time, validate_and_format_date)
 
 
@@ -558,3 +560,140 @@ def test_generator_top_five_transactions_missing_columns() -> None:
     with pytest.raises(ValueError) as exc_info:
         generator_top_five_transactions(df)
     assert "Отсутствует необходимый столбец" in str(exc_info)
+
+
+def test_filter_expenses() -> None:
+    """Тестирование фильтрации расходов"""
+    df = pd.DataFrame({"Сумма платежа": [-10.0, -20.0, 30.0, -40.0, 50.0]})
+    result = filter_expenses(df).reset_index(drop=True)
+    expected = pd.DataFrame({"Сумма платежа": [-10.0, -20.0, -40.0]})
+    # сравнение с помощью pandas
+    pd.testing.assert_frame_equal(result, expected)
+
+
+def test_filter_expenses_missing_columns() -> None:
+    """Тестирование при отсутствии нужного столбца"""
+    df = pd.DataFrame(
+        {
+            "Дата платежа": ["06.01.2020", "06.01.2020", "04.01.2020", "06.01.2020", "04.01.2020"],
+        }
+    )
+    with pytest.raises(ValueError) as exc_info:
+        filter_expenses(df)
+    assert "Отсутствует необходимый столбец" in str(exc_info)
+
+
+def test_filter_income() -> None:
+    """Тестирование фильтрации доходов"""
+    df = pd.DataFrame({"Сумма платежа": [-10.0, -20.0, 30.0, -40.0, 50.0]})
+    result = filter_income(df).reset_index(drop=True)
+    expected = pd.DataFrame({"Сумма платежа": [30.0, 50.0]})
+    # сравнение с помощью pandas
+    pd.testing.assert_frame_equal(result, expected)
+
+
+def test_filter_income_missing_columns() -> None:
+    """Тестирование при отсутствии нужного столбца"""
+    df = pd.DataFrame(
+        {
+            "Дата платежа": ["06.01.2020", "06.01.2020", "04.01.2020", "06.01.2020", "04.01.2020"],
+        }
+    )
+    with pytest.raises(ValueError) as exc_info:
+        filter_income(df)
+    assert "Отсутствует необходимый столбец" in str(exc_info)
+
+
+@pytest.mark.parametrize(
+    "df, expected",
+    [
+        (pd.DataFrame({"Сумма платежа": [-10.0, -20.0, -40.0]}), 70.0),
+        (pd.DataFrame({"Сумма платежа": [30.0, 50.0]}), 80.0),
+    ],
+)
+def test_calculate_total_amount(df: pd.DataFrame, expected: float) -> None:
+    """Тестирование суммирование"""
+    result = calculate_total_amount(df)
+    assert result == expected
+
+
+def test_get_main_expenses(transactions_df_expenses: pd.DataFrame) -> None:
+    """Тестирование получение основных расходов"""
+    result = get_main_expenses(transactions_df_expenses)
+    expected = [{"category": "Супермаркеты", "amount": 20.0}, {"category": "Аптеки", "amount": 10.0}]
+    assert result == expected
+
+
+def test_get_transfers_and_cash(transactions_df_expenses: pd.DataFrame) -> None:
+    """Тестирование получение расходов по переводам и наличным"""
+    result = get_transfers_and_cash(transactions_df_expenses)
+    expected = [{"category": "Наличные", "amount": 40.0}, {"category": "Переводы", "amount": 30.0}]
+    assert result == expected
+
+
+@patch("src.utils.get_transfers_and_cash")
+@patch("src.utils.get_main_expenses")
+@patch("src.utils.calculate_total_amount")
+@patch("src.utils.filter_expenses")
+def test_get_expenses_report(
+    mock_filter_expenses: MagicMock,
+    mock_calculate_total_amount: MagicMock,
+    mock_get_main_expenses: MagicMock,
+    mock_get_transfers_and_cash: MagicMock,
+    transactions_df_expenses: pd.DataFrame,
+) -> None:
+    """Тестирование работы функции на вывод требуемого словаря"""
+    df = transactions_df_expenses
+    mock_filter_expenses.return_value = transactions_df_expenses
+    mock_calculate_total_amount.return_value = 100.0
+    main_expenses = [{"category": "Супермаркеты", "amount": 20.0}, {"category": "Аптеки", "amount": 10.0}]
+    mock_get_main_expenses.return_value = main_expenses
+    transfers_and_cash = [{"category": "Наличные", "amount": 40.0}, {"category": "Переводы", "amount": 30.0}]
+    mock_get_transfers_and_cash.return_value = transfers_and_cash
+    result = get_expenses_report(df)
+    expected = {"total_amount": 100.0, "main": main_expenses, "transfers_and_cash": transfers_and_cash}
+    assert result == expected
+    # Проверка, что все моки были вызваны ровно один раз
+    mock_filter_expenses.assert_called_once()
+    mock_calculate_total_amount.assert_called_once()
+    mock_get_main_expenses.assert_called_once()
+    mock_get_transfers_and_cash.assert_called_once()
+
+
+def test_get_main_income(transactions_df_income: pd.DataFrame) -> None:
+    """Тестирование получение основных доходов"""
+    result = get_main_income(transactions_df_income)
+    expected = [
+        {"category": "Переводы", "amount": 30.0},
+        {"category": "Бонусы", "amount": 20.0},
+        {"category": "Различные товары", "amount": 10.0},
+    ]
+    assert result == expected
+
+
+@patch("src.utils.get_main_income")
+@patch("src.utils.calculate_total_amount")
+@patch("src.utils.filter_income")
+def test_get_income_report(
+    mock_filter_income: MagicMock,
+    mock_calculate_total_amount: MagicMock,
+    mock_get_main_income: MagicMock,
+    transactions_df_income: pd.DataFrame,
+) -> None:
+    """Тестирование работы функции на вывод требуемого словаря"""
+    df = transactions_df_income
+    mock_filter_income.return_value = transactions_df_income
+    mock_calculate_total_amount.return_value = 60.0
+    main_income = [
+        {"category": "Переводы", "amount": 30.0},
+        {"category": "Бонусы", "amount": 20.0},
+        {"category": "Различные товары", "amount": 10.0},
+    ]
+    mock_get_main_income.return_value = main_income
+    result = get_income_report(df)
+    expected = {"total_amount": 60.0, "main": main_income}
+    assert result == expected
+    # Проверка, что все моки были вызваны ровно один раз
+    mock_filter_income.assert_called_once()
+    mock_calculate_total_amount.assert_called_once()
+    mock_get_main_income.assert_called_once()

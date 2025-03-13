@@ -338,6 +338,7 @@ def generator_top_five_transactions(df: pd.DataFrame) -> List[Dict[str, Any]]:
         return []
 
     try:
+        utils_logger.info("Функция топ-5 транзакций по сумме платежа - началась")
         columns = df.loc[:, ["Дата платежа", "Сумма платежа", "Категория", "Описание"]]
         top_five_transactions = columns.loc[columns["Сумма платежа"].abs().sort_values(ascending=False).index].head(5)
         result = top_five_transactions.to_dict(orient="records")
@@ -357,17 +358,153 @@ def generator_top_five_transactions(df: pd.DataFrame) -> List[Dict[str, Any]]:
                 "description": category["Описание"],
             }
             formatted_result.append(top_transactions)
+        utils_logger.info("Функция топ-5 транзакций по сумме платежа - выполнена")
         return formatted_result
 
     except KeyError as exc_info:
-        raise ValueError(f"Отсутствует необходимый столбец: {str(exc_info)}") from exc_info
+        error_message = f"Отсутствует необходимый столбец: {str(exc_info)}"
+        utils_logger.error(error_message)
+        raise ValueError(error_message) from exc_info
 
 
-if __name__ == "__main__":
-    date_obj = datetime.datetime.strptime("2025-03-02", "%Y-%m-%d")
-    week_day = date_obj.weekday()
-    date_to = date_obj
-    date_from = date_obj - datetime.timedelta(week_day)
+def filter_expenses(df: pd.DataFrame) -> pd.DataFrame:
+    """Функция фильтрует только расходов из DataFrame"""
+    try:
+        utils_logger.info("Выполняется функция фильтрации по расходам")
+        result = df[df["Сумма платежа"] < 0]
+        return result
+    except KeyError as exc_info:
+        error_message = f"Отсутствует необходимый столбец: {str(exc_info)}"
+        utils_logger.error(error_message)
+        raise ValueError(error_message) from exc_info
 
-    print(f"{date_from}-{date_to}")
-    pass
+
+def filter_income(df: pd.DataFrame) -> pd.DataFrame:
+    """Функция фильтрует только доходы из DataFrame"""
+    try:
+        utils_logger.info("Выполняется функция фильтрации по доходам")
+        result = df[df["Сумма платежа"] > 0]
+        return result
+    except KeyError as exc_info:
+        error_message = f"Отсутствует необходимый столбец: {str(exc_info)}"
+        utils_logger.error(error_message)
+        raise ValueError(error_message) from exc_info
+
+
+def calculate_total_amount(df: pd.DataFrame) -> float:
+    """Функция вычисляет общую сумму"""
+    utils_logger.info("Выполняется функция суммы платежей")
+    total_amount_expenses = df.agg({"Сумма платежа": "sum"})
+    expenses = float(round(abs(total_amount_expenses.to_dict()["Сумма платежа"]), 2))
+    return expenses
+
+
+def get_main_expenses(df: pd.DataFrame) -> List[Dict[str, float]]:
+    """Функция выводит основные расходы по категориям: [{"category": X, "amount": X}].
+    Первые 7, далее суммирует в 'Остальные'. Кроме: 'Переводы' и 'Наличные'"""
+    utils_logger.info("Выполняется функция получение основных расходов по категориям")
+    expenses_main = df[(df["Категория"] != "Переводы") & (df["Категория"] != "Наличные")]
+    group_category_main = (
+        expenses_main.groupby("Категория")
+        .agg({"Сумма платежа": "sum"})
+        .abs()
+        .sort_values(by="Сумма платежа", ascending=False)
+        .head(7)
+    )
+    group_category_main_dict = group_category_main.to_dict()
+
+    main_expenses = []
+    for key, value in group_category_main_dict["Сумма платежа"].items():
+        main_expenses.append({"category": key, "amount": value})
+
+    if group_category_main.shape[0] > 7:
+        group_category_main_remnant = group_category_main.iloc[7:].sum()
+        remaining_dict = group_category_main_remnant.to_dict()
+        remnant = remaining_dict["Сумма платежа"]
+        main_expenses.append({"category": "Остальное", "amount": remnant})
+    utils_logger.info("Функция получение основных расходов по категориям выполнена")
+    return main_expenses
+
+
+def get_transfers_and_cash(df: pd.DataFrame) -> List[Dict[str, float]]:
+    """Функция выводит расходы по переводам и наличным: [{"category": X, "amount": X}]."""
+    utils_logger.info("Выполняется функция получение расходов по переводам и наличным")
+    transfers_and_cash = df[(df["Категория"] == "Переводы") | (df["Категория"] == "Наличные")]
+    group_category = (
+        transfers_and_cash.groupby("Категория")
+        .agg({"Сумма платежа": "sum"})
+        .abs()
+        .sort_values(by="Сумма платежа", ascending=False)
+    )
+    group_category_dict = group_category.to_dict()
+
+    transfers_and_cash_list = []
+    for key, value in group_category_dict["Сумма платежа"].items():
+        transfers_and_cash_list.append({"category": key, "amount": value})
+    utils_logger.info("Функция получение расходов по переводам и наличным - Выполнена")
+    return transfers_and_cash_list
+
+
+def get_expenses_report(df: pd.DataFrame) -> Dict[str, Any]:
+    """
+    Функция получение отчета о расходах из DataFrame
+    :param df: транзакции DataFrame
+    :return: словарь
+    {
+        total_amount": total_amount,
+        "main": main_expenses: [], "transfers_and_cash": []
+    }
+    """
+    utils_logger.info("Формирование отчета по расходам - началось")
+    expenses = filter_expenses(df)  # фильтруем только расходы
+
+    total_amount = calculate_total_amount(expenses)  # общая сумма расходов
+
+    main_expenses = get_main_expenses(expenses)  # расходы по категориям
+
+    transfers_and_cash_list = get_transfers_and_cash(expenses)  # расходы по переводам и наличным
+
+    # итоговый результат
+    result = {"total_amount": total_amount, "main": main_expenses, "transfers_and_cash": transfers_and_cash_list}
+    utils_logger.info("Формирование отчета по расходам - выполнено")
+    return result
+
+
+def get_main_income(df: pd.DataFrame) -> List[Dict[str, float]]:
+    """Функция выводит доходы по категориям: [{"category": X, "amount": X}]"""
+    utils_logger.info("Выполняется функция получение основных доходов по категориям")
+    group_category_main = (
+        df.groupby("Категория").agg({"Сумма платежа": "sum"}).abs().sort_values(by="Сумма платежа", ascending=False)
+    )
+    group_category_main_dict = group_category_main.to_dict()
+
+    main_income = []
+    for key, value in group_category_main_dict["Сумма платежа"].items():
+        main_income.append({"category": key, "amount": value})
+    utils_logger.info("Функция получение основных доходов по категориям - выполнена")
+    return main_income
+
+
+def get_income_report(df: pd.DataFrame) -> Dict[str, Any]:
+    """
+    Функция получение отчета о доходах из DataFrame
+    :param df: транзакции DataFrame
+    :return: словарь:
+    {
+        "total_amount": ...,
+        "main": [...]
+    }
+    """
+    utils_logger.info("Формирование отчета по доходам - началось")
+    income = filter_income(df)  # фильтруем только расходы
+
+    total_amount = calculate_total_amount(income)  # общая сумма расходов
+
+    main_income = get_main_income(income)  # расходы по категориям
+    # итоговый результат
+    result = {
+        "total_amount": total_amount,
+        "main": main_income,
+    }
+    utils_logger.info("Формирование отчета по доходам - выполнено")
+    return result

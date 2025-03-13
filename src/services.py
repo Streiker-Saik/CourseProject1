@@ -60,7 +60,7 @@ def get_profitable_cashback(data: List[Dict[str, Any]], year: int, month: int) -
         & (df["Категория"] != "Переводы")
     ]
 
-    # Группируем по категориям и суммируем, первые 3
+    # Группируем по категориям и суммируем
     group_cate_category = (
         filtered_df_by_date.groupby("Категория")
         .agg({"Сумма платежа": "sum"})

@@ -5,7 +5,7 @@ import pandas as pd
 from src.reports import spending_by_category, spending_by_weekday, spending_by_workday
 from src.services import get_profitable_cashback
 from src.utils import get_transactions_from_excel
-from src.views import views_home
+from src.views import get_views_events, get_views_home
 
 BASEDIR = Path(__file__).resolve().parent
 
@@ -15,9 +15,14 @@ def main() -> None:
     date = "2020-12-15 12:00:00"
     file_operations = str(BASEDIR / "data" / "operations.xlsx")
     file_user_settings = str(BASEDIR / "user_settings.json")
-    print("Веб-страницы: Главная")
-    views = views_home(date, file_operations, file_user_settings)
-    print(views)
+
+    print("Веб-страницы:")
+    print("- Главная")
+    views_home = get_views_home(date, file_operations, file_user_settings)
+    print(views_home)
+    print("- События")
+    views_events = get_views_events(date, file_operations, file_user_settings, "W")
+    print(views_events)
 
     print("Сервисы: Выгодные категории повышенного кешбэка(сколько на каждой категории можно заработать кешбэка 10 %)")
     transactions = get_transactions_from_excel(file_operations)
@@ -35,7 +40,3 @@ def main() -> None:
     print("- Среднее количество траты в рабочий и выходной")
     spending_per_day_work_and_weekend = spending_by_workday(transactions_df, date)
     print(spending_per_day_work_and_weekend)
-
-
-if __name__ == "__main__":
-    main()

@@ -5,9 +5,9 @@ import os
 import pandas as pd
 
 from src.utils import (filter_operations_by_date, filter_operations_by_month_and_date, generate_card_report,
-                       generator_top_five_transactions, get_currencies_rates_in_rub, get_stocks_in_usd,
-                       get_transactions_from_excel, get_user_settings_from_json, greeting_from_time_to_time,
-                       validate_and_format_date)
+                       generator_top_five_transactions, get_currencies_rates_in_rub, get_expenses_report,
+                       get_income_report, get_stocks_in_usd, get_transactions_from_excel, get_user_settings_from_json,
+                       greeting_from_time_to_time, validate_and_format_date)
 
 # создание абсолютного пути из относительного
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -23,7 +23,7 @@ views_logger.addHandler(file_handler)
 views_logger.setLevel(logging.DEBUG)
 
 
-def views_home(date: str, file_operations: str, file_user_settings: str) -> str:
+def get_views_home(date: str, file_operations: str, file_user_settings: str) -> str:
     """
     Функция выдает JSON строку: Страница "Главная"
     :param date: дата формата YYYY-MM-DD HH:MM:SS
@@ -40,39 +40,39 @@ def views_home(date: str, file_operations: str, file_user_settings: str) -> str:
     """
     views_logger.info("Функция получение JSON файла главной страницы - начата")
 
-    views_logger.info("Использует функцию src.validate_and_format_date")
+    views_logger.info("Использует функцию src.utils.validate_and_format_date")
     date_obj = validate_and_format_date(date)
 
-    views_logger.info("Использует функцию src.get_transactions_from_excel")
+    views_logger.info("Использует функцию src.utils.get_transactions_from_excel")
     operations = get_transactions_from_excel(file_operations)
 
-    views_logger.info("Использует функцию src.get_user_settings_from_json")
+    views_logger.info("Использует функцию src.utils.get_user_settings_from_json")
     user_settings = get_user_settings_from_json(file_user_settings)
 
     df = pd.DataFrame(operations)
-    views_logger.info("Использует функцию src.filter_operations_by_month_and_date")
+    views_logger.info("Использует функцию src.utils.filter_operations_by_month_and_date")
     filter_df = filter_operations_by_month_and_date(df, date_obj)
 
     # 1. Приветствие
-    views_logger.info("Использует функцию src.greeting_from_time_to_time")
+    views_logger.info("Использует функцию src.utils.greeting_from_time_to_time")
     greeting = greeting_from_time_to_time(date_obj)
 
     # 2. По каждой карте: последние 4 цифры карты; общая сумма расходов; кешбэк (1 рубль на каждые 100 рублей)
-    views_logger.info("Использует функцию src.generate_card_report")
+    views_logger.info("Использует функцию src.utils.generate_card_report")
     cards = generate_card_report(filter_df)
 
     # 3. Топ - 5 транзакций по сумме платежа
-    views_logger.info("Использует функцию src.generator_top_five_transactions")
+    views_logger.info("Использует функцию src.utils.generator_top_five_transactions")
     top_transactions = generator_top_five_transactions(filter_df)
 
     # 4. Курс валют
     currencies = user_settings[0].get("user_currencies", [])
-    views_logger.info("Использует функцию src.get_currencies_rates_in_rub")
+    views_logger.info("Использует функцию src.utils.get_currencies_rates_in_rub")
     currency_rates = get_currencies_rates_in_rub(currencies)
 
     # 5. Стоимость акций из S&P500
     stocks_list = user_settings[0].get("user_stocks", [])
-    views_logger.info("Использует функцию src.get_stocks_in_usd")
+    views_logger.info("Использует функцию src.utils.get_stocks_in_usd")
     stock_prices = get_stocks_in_usd(stocks_list)
 
     data_output = {
@@ -88,7 +88,7 @@ def views_home(date: str, file_operations: str, file_user_settings: str) -> str:
     return result
 
 
-def views_events(
+def get_views_events(
     date: str,
     file_operations: str,
     file_user_settings: str,
@@ -121,29 +121,26 @@ def views_events(
     """
     views_logger.info("Функция получение JSON файла главной страницы - начата")
 
-    views_logger.info("Использует функцию src.validate_and_format_date")
+    views_logger.info("Использует функцию src.utils.validate_and_format_date")
     date_obj = validate_and_format_date(date)
 
-    views_logger.info("Использует функцию src.get_transactions_from_excel")
+    views_logger.info("Использует функцию src.utils.get_transactions_from_excel")
     operations = get_transactions_from_excel(file_operations)
 
-    views_logger.info("Использует функцию src.get_user_settings_from_json")
+    views_logger.info("Использует функцию src.utils.get_user_settings_from_json")
     user_settings = get_user_settings_from_json(file_user_settings)
 
     df = pd.DataFrame(operations)
-    views_logger.info("Использует функцию src.filter_operations_by_date")
+    views_logger.info("Использует функцию src.utils.filter_operations_by_date")
     transactions_df = filter_operations_by_date(df, date_obj, data_range)
 
-    # 1. Расходы:
-    # - общая сумма расходов,
-    # - раздел «Основные», в котором траты по категориям отсортированы по убыванию.Данные предоставляются
-    #   по 7 категориям с наибольшими тратами, траты по остальным категориям суммируются и попадают
-    #   в категорию «Остальное»
-    # - раздел «Переводы и наличные», в котором сумма по категориям «Наличные» и «Переводы» отсортирована по убыванию
+    # 1. Расходы: общая сумма расходов, раздел «Основные», раздел «Переводы и наличные»
+    views_logger.info("Использует функцию src.utils.get_expenses_report")
+    expenses = get_expenses_report(transactions_df)
 
-    # 2. Поступления:
-    # - общая сумма поступлений,
-    # - раздел «Основные» (в котором поступления по категориям отсортированы по убыванию)
+    # 2. Поступления: общая сумма поступлений, раздел «Основные»
+    views_logger.info("Использует функцию src.utils.get_income_report")
+    income = get_income_report(transactions_df)
 
     # 3. Курс валют
     currencies = user_settings[0].get("user_currencies", [])
@@ -155,12 +152,8 @@ def views_events(
     views_logger.info("Использует функцию src.get_stocks_in_usd")
     stock_prices = get_stocks_in_usd(stocks_list)
     data_output = {
-        # "expenses": {
-        #     "total_amount": total_amount_expenses,
-        #     "main": main_expenses,
-        #     "transfers_and_cash": transfers_and_cash,
-        # },
-        # "income": {"total_amount": total_amount_income, "main": main_income},
+        "expenses": expenses,
+        "income": income,
         "currency_rates": currency_rates,
         "stock_prices": stock_prices,
     }

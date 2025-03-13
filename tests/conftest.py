@@ -51,3 +51,23 @@ def transactions_df_days() -> pd.DataFrame:
             "Статус": ["OK", "OK", "OK", "FAILED", "OK", "OK"],
         }
     )
+
+
+@pytest.fixture()
+def transactions_df_expenses() -> pd.DataFrame:
+    return pd.DataFrame(
+        {
+            "Сумма платежа": [-10.0, -20.0, -30.0, -40.0],
+            "Категория": ["Аптеки", "Супермаркеты", "Переводы", "Наличные"],
+        }
+    )
+
+
+@pytest.fixture()
+def transactions_df_income() -> pd.DataFrame:
+    return pd.DataFrame(
+        {
+            "Сумма платежа": [10.0, 20.0, 30.0],
+            "Категория": ["Различные товары", "Бонусы", "Переводы"],
+        }
+    )
