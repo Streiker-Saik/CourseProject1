@@ -2,7 +2,7 @@ from typing import Any, Dict, List
 
 import pytest
 
-from src.services import get_profitable_cashback
+from src.services import get_profitable_cashback, search_transfers_to_individuals, search_by_phone, simple_search
 
 
 @pytest.mark.parametrize(
@@ -37,3 +37,32 @@ def test_get_profitable_cashback_empty_filters() -> None:
     ]
     result = get_profitable_cashback(transactions, 2018, 5)
     assert result == "{}"
+
+
+def test_investment_bank() -> None:
+    pass
+
+
+def test_simple_search(search_transactions: List[Dict[str, Any]]) -> None:
+    """Тестирование простого поиска по фразе"""
+    result = simple_search(search_transactions, "Магнит")
+    expected = ('[{"Категория": "Супермаркеты", "Описание": "Магнит"}]')
+    assert result == expected
+
+
+def test_search_by_phone(search_transactions: List[Dict[str, Any]]) -> None:
+    """Тестирование функции поиска и фильтрации с наличием номеров телефона"""
+    result = search_by_phone(search_transactions)
+    expected = ('[{"Категория": "Мобильная связь", "Описание": "Тинькофф Мобайл +7 995 555-55-55"}, '
+                '{"Категория": "Мобильная связь", "Описание": "МТС Mobile +7 981 333-44-55"}]')
+    assert result == expected
+
+
+def test_search_transfers_to_individuals(search_transactions: List[Dict[str, Any]]) -> None:
+    """Тестирование функции поиска и фильтрации с наличием перевода физическим лицам"""
+    result = search_transfers_to_individuals(search_transactions)
+    expected = ('[{"Категория": "Переводы", "Описание": "Валерий А."}, '
+                '{"Категория": "Переводы", "Описание": "Сергей З."}, '
+                '{"Категория": "Переводы", "Описание": "Артем П."}]')
+    assert result == expected
+

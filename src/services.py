@@ -3,6 +3,7 @@ import datetime
 import json
 import logging
 import os
+import re
 from typing import Any, Dict, List
 
 import pandas as pd
@@ -83,3 +84,72 @@ def get_profitable_cashback(data: List[Dict[str, Any]], year: int, month: int) -
         f"по категориям выполнена"
     )
     return result
+
+
+def investment_bank(month: str, transactions: List[Dict[str, Any]], limit: int) -> float:
+    """
+    Функция
+    :param month: месяц, для которого рассчитывается отложенная сумма (строка в формате 'YYYY-MM')
+    :param transactions: список словарей, содержащий информацию о транзакциях, в которых содержатся следующие поля:
+        - Дата операции — дата, когда произошла транзакция (строка в формате 'YYYY-MM-DD').
+        - Сумма операции — сумма транзакции в оригинальной валюте (число)
+    :param limit: предел, до которого нужно округлять суммы операций (целое число)
+    :return: возвращает сумму, которую удалось бы отложить в "Инвесткопилку"
+    """
+    # json
+    # datetime
+    # logging
+    # pytest
+    pass
+
+
+def simple_search(transactions: List[Dict[str, Any]], search_string: str) -> str:
+    """Функция возвращает, JSON строку, транзакции с наличие поисковой строки в категориях или описании"""
+
+    pattern = re.compile(search_string)
+    result_list = []
+
+    for transaction in transactions:
+        description = transaction.get("Описание") or ""
+        category = transaction.get("Категория") or ""
+
+        # Проверяем, есть ли совпадения в описании или категории
+        if pattern.search(description) or pattern.search(category):
+            result_list.append(transaction)
+    result = json.dumps(result_list, ensure_ascii=False)
+    return result
+    # services_logger.info(f"Функция поиска с фильтрацией {search_string} в Описание и Категория - началась.")
+    # result_list = [transaction for transaction in transactions if transaction["Описание"] == search_string or transaction["Категория"] == search_string]
+    # result = json.dumps(result_list, ensure_ascii=False)
+    # services_logger.info(f"Функция поиска с фильтрацией {search_string} в Описание и Категория - выполнена.")
+    # return result
+
+
+def search_by_phone(transactions: List[Dict[str, Any]]) -> str:
+    """Функция возвращает, JSON строку, транзакции с мобильными номерами в описании"""
+    services_logger.info("Функция поиска и фильтрации с наличием мобильных номеров - началась.")
+    pattern = re.compile(r"\D+ \+7 \d{3} \d{3}-\d{2}-\d{2}")
+    result_list = [transaction for transaction in transactions if re.search(pattern, transaction["Описание"])]
+    result = json.dumps(result_list, ensure_ascii=False)
+    services_logger.info("Функция поиска и фильтрации с наличием мобильных номеров - выполнена.")
+    return result
+
+
+def search_transfers_to_individuals(transactions: List[Dict[str, Any]]) -> str:
+    """Функция возвращает, JSON строку, транзакции с переводами физическим лицам"""
+    services_logger.info("Функция поиска переводов физическим лицам - началась.")
+    pattern = re.compile(r"\D+ \D\.")
+    result_list = [transaction for transaction in transactions if transaction["Категория"] == "Переводы" and re.search(pattern, transaction["Описание"])]
+    result = json.dumps(result_list, ensure_ascii=False)
+    services_logger.info("Функция поиска переводов физическим лицам - выполнена.")
+    return result
+
+
+if __name__ == '__main__':
+    from src.utils import get_transactions_from_excel
+
+    file_operations = "../data/operations.xlsx"
+    transactions = get_transactions_from_excel(file_operations)
+    print(simple_search(transactions, "Бонусы"))
+    print(search_by_phone(transactions))
+    print(search_transfers_to_individuals(transactions))

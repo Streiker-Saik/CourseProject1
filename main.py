@@ -3,7 +3,8 @@ from pathlib import Path
 import pandas as pd
 
 from src.reports import spending_by_category, spending_by_weekday, spending_by_workday
-from src.services import get_profitable_cashback
+from src.services import (get_profitable_cashback, investment_bank, search_by_phone, search_transfers_to_individuals,
+                          simple_search)
 from src.utils import get_transactions_from_excel
 from src.views import get_views_events, get_views_home
 
@@ -24,10 +25,23 @@ def main() -> None:
     views_events = get_views_events(date, file_operations, file_user_settings, "W")
     print(views_events)
 
-    print("Сервисы: Выгодные категории повышенного кешбэка(сколько на каждой категории можно заработать кешбэка 10 %)")
+    print("Сервисы:")
+    print("- Выгодные категории повышенного кешбэка(сколько на каждой категории можно заработать кешбэка 10 %)")
     transactions = get_transactions_from_excel(file_operations)
     top_three_category = get_profitable_cashback(transactions, 2020, 12)
     print(top_three_category)
+    print("- Инвесткопилка")
+    investment_bank()
+    print()
+    print("- Простой поиск")
+    simple_search()
+    print()
+    print("- Поиск по телефонным номерам")
+    search_by_phone()
+    print()
+    print("- Поиск переводов физическим лицам")
+    search_transfers_to_individuals()
+    print()
 
     print("Отчеты:")
     print("- Траты по категории.")
