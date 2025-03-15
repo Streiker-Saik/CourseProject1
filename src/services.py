@@ -86,27 +86,60 @@ def get_profitable_cashback(data: List[Dict[str, Any]], year: int, month: int) -
     return result
 
 
-def investment_bank(month: str, transactions: List[Dict[str, Any]], limit: int) -> float:
+def investment_bank(year_month: str, transactions: List[Dict[str, Any]], limit: int) -> str:
     """
-    Функция
+    Функция суммы возможных накоплений в "Инвесткопилку"
     :param month: месяц, для которого рассчитывается отложенная сумма (строка в формате 'YYYY-MM')
     :param transactions: список словарей, содержащий информацию о транзакциях, в которых содержатся следующие поля:
         - Дата операции — дата, когда произошла транзакция (строка в формате 'YYYY-MM-DD').
         - Сумма операции — сумма транзакции в оригинальной валюте (число)
     :param limit: предел, до которого нужно округлять суммы операций (целое число)
-    :return: возвращает сумму, которую удалось бы отложить в "Инвесткопилку"
+    :return: возвращает JSON строку: сумму, которую удалось бы отложить в "Инвесткопилку" '{"invest_savings": X.XX}'
     """
-    # json
-    # datetime
-    # logging
-    # pytest
-    pass
+    try:
+        services_logger.info(
+            f"Функция суммы возможных накоплений в 'Инвесткопилку' d {year_month}, с выводом в JSON - началась."
+        )
+        #
+        date_obj = datetime.datetime.strptime(year_month, "%Y-%m")
+        date_from = date_obj
+        year = date_obj.year
+        month = date_obj.month
+        max_day = calendar.monthrange(year, month)[1]
+        date_to = datetime.datetime(year, month, max_day, 23, 59, 59)
+
+        services_logger.info(
+            f"Фильтрует транзакции с {date_from} по {date_to}, только расходы, со статусом 'OK', кроме 'Переводы'"
+        )
+        filter_date = [
+            transaction
+            for transaction in transactions
+            if date_from <= datetime.datetime.strptime(transaction["Дата операции"], "%d.%m.%Y %H:%M:%S") <= date_to
+            and transaction["Сумма платежа"] < 0
+            and transaction["Категория"] != "Переводы"
+            and transaction["Статус"] == "OK"
+        ]
+
+        services_logger.info(f"Суммирует всех трат кратные '{limit}'")
+        savings = abs(sum(map(lambda x: x.get("Сумма платежа", 0) % limit, filter_date)))
+
+        invest_savings = {"invest_savings": round(savings, 2)}
+        result = json.dumps(invest_savings, ensure_ascii=False)
+        services_logger.info(
+            f"Функция суммы возможных накоплений в 'Инвесткопилку' в {year_month}, с выводом в JSON - выполнена."
+        )
+        return result
+
+    except KeyError as exc_info:
+        error_message = f"Отсутствует необходимый ключ в словаре: {str(exc_info)}"
+        services_logger.error(error_message)
+        raise ValueError(error_message) from exc_info
 
 
 def simple_search(transactions: List[Dict[str, Any]], search_string: str) -> str:
-    """Функция возвращает, JSON строку, транзакции с наличие поисковой строки в категориях или описании"""
-
-    pattern = re.compile(search_string)
+    """Функция возвращает, JSON строку, транзакции с наличием поисковой строки в категориях или описании"""
+    services_logger.info(f"Функция поиска с фильтрацией '{search_string}' в Описание и Категория - началась.")
+    pattern = re.compile(search_string, re.IGNORECASE)
     result_list = []
 
     for transaction in transactions:
@@ -116,20 +149,17 @@ def simple_search(transactions: List[Dict[str, Any]], search_string: str) -> str
         # Проверяем, есть ли совпадения в описании или категории
         if pattern.search(description) or pattern.search(category):
             result_list.append(transaction)
+
     result = json.dumps(result_list, ensure_ascii=False)
+    services_logger.info(f"Функция поиска с фильтрацией '{search_string}' в Описание и Категория - выполнена.")
     return result
-    # services_logger.info(f"Функция поиска с фильтрацией {search_string} в Описание и Категория - началась.")
-    # result_list = [transaction for transaction in transactions if transaction["Описание"] == search_string or transaction["Категория"] == search_string]
-    # result = json.dumps(result_list, ensure_ascii=False)
-    # services_logger.info(f"Функция поиска с фильтрацией {search_string} в Описание и Категория - выполнена.")
-    # return result
 
 
 def search_by_phone(transactions: List[Dict[str, Any]]) -> str:
     """Функция возвращает, JSON строку, транзакции с мобильными номерами в описании"""
     services_logger.info("Функция поиска и фильтрации с наличием мобильных номеров - началась.")
     pattern = re.compile(r"\D+ \+7 \d{3} \d{3}-\d{2}-\d{2}")
-    result_list = [transaction for transaction in transactions if re.search(pattern, transaction["Описание"])]
+    result_list = [transaction for transaction in transactions if pattern.search(transaction["Описание"])]
     result = json.dumps(result_list, ensure_ascii=False)
     services_logger.info("Функция поиска и фильтрации с наличием мобильных номеров - выполнена.")
     return result
@@ -139,17 +169,11 @@ def search_transfers_to_individuals(transactions: List[Dict[str, Any]]) -> str:
     """Функция возвращает, JSON строку, транзакции с переводами физическим лицам"""
     services_logger.info("Функция поиска переводов физическим лицам - началась.")
     pattern = re.compile(r"\D+ \D\.")
-    result_list = [transaction for transaction in transactions if transaction["Категория"] == "Переводы" and re.search(pattern, transaction["Описание"])]
+    result_list = [
+        transaction
+        for transaction in transactions
+        if transaction["Категория"] == "Переводы" and pattern.search(transaction["Описание"])
+    ]
     result = json.dumps(result_list, ensure_ascii=False)
     services_logger.info("Функция поиска переводов физическим лицам - выполнена.")
     return result
-
-
-if __name__ == '__main__':
-    from src.utils import get_transactions_from_excel
-
-    file_operations = "../data/operations.xlsx"
-    transactions = get_transactions_from_excel(file_operations)
-    print(simple_search(transactions, "Бонусы"))
-    print(search_by_phone(transactions))
-    print(search_transfers_to_individuals(transactions))
