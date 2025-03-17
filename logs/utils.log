@@ -1,0 +1,121 @@
+2025-03-15 19:03:53,328 - utils: validate_and_format_date - INFO: Функция проверки формата и форматирование начато
+2025-03-15 19:03:53,330 - utils: validate_and_format_date - INFO: Функция проверки формата и форматирование выполнена
+2025-03-15 19:03:53,331 - utils: validate_and_format_date - INFO: Функция проверки формата и форматирование начато
+2025-03-15 19:03:53,331 - utils: validate_and_format_date - INFO: Функция проверки формата и форматирование выполнена
+2025-03-15 19:03:53,333 - utils: validate_and_format_date - INFO: Функция проверки формата и форматирование начато
+2025-03-15 19:03:53,333 - utils: validate_and_format_date - INFO: Функция проверки формата и форматирование выполнена
+2025-03-15 19:03:53,369 - utils: validate_and_format_date - INFO: Функция проверки формата и форматирование начато
+2025-03-15 19:03:53,369 - utils: validate_and_format_date - INFO: Функция проверки формата и форматирование выполнена
+2025-03-15 19:03:53,411 - utils: validate_and_format_date - INFO: Функция проверки формата и форматирование начато
+2025-03-15 19:03:53,412 - utils: validate_and_format_date - INFO: Функция проверки формата и форматирование выполнена
+2025-03-15 19:03:53,449 - utils: validate_and_format_date - INFO: Функция проверки формата и форматирование начато
+2025-03-15 19:03:53,450 - utils: validate_and_format_date - INFO: Функция проверки формата и форматирование выполнена
+2025-03-15 19:03:53,451 - utils: validate_and_format_date - INFO: Функция проверки формата и форматирование начато
+2025-03-15 19:03:53,453 - utils: validate_and_format_date - INFO: Функция проверки формата и форматирование выполнена
+2025-03-15 19:03:53,455 - utils: validate_and_format_date - INFO: Функция проверки формата и форматирование начато
+2025-03-15 19:03:53,455 - utils: validate_and_format_date - ERROR: Данного формата не поддерживается
+2025-03-15 19:03:53,456 - utils: greeting_from_time_to_time - INFO: Выполняется функция приветствия в 0 часов
+2025-03-15 19:03:53,456 - utils: greeting_from_time_to_time - INFO: Функция приветствия в 0 часов выполнена
+2025-03-15 19:03:53,458 - utils: greeting_from_time_to_time - INFO: Выполняется функция приветствия в 6 часов
+2025-03-15 19:03:53,458 - utils: greeting_from_time_to_time - INFO: Функция приветствия в 6 часов выполнена
+2025-03-15 19:03:53,460 - utils: greeting_from_time_to_time - INFO: Выполняется функция приветствия в 12 часов
+2025-03-15 19:03:53,460 - utils: greeting_from_time_to_time - INFO: Функция приветствия в 12 часов выполнена
+2025-03-15 19:03:53,462 - utils: greeting_from_time_to_time - INFO: Выполняется функция приветствия в 18 часов
+2025-03-15 19:03:53,462 - utils: greeting_from_time_to_time - INFO: Функция приветствия в 18 часов выполнена
+2025-03-15 19:03:53,464 - utils: get_transactions_from_excel - INFO: Выполняем преобразование EXCEL-файла "test.xlsx" в объект Python
+2025-03-15 19:03:53,465 - utils: get_transactions_from_excel - ERROR: Файл 'test.xlsx' - не найден
+2025-03-15 19:03:53,467 - utils: get_transactions_from_excel - INFO: Выполняем преобразование EXCEL-файла "test.xlsx" в объект Python
+2025-03-15 19:03:53,469 - utils: get_transactions_from_excel - INFO: Преобразование JSON-файла "test.xlsx" в объект Python выполнено
+2025-03-15 19:03:53,470 - utils: get_user_settings_from_json - ERROR: Файл 'non.json' - не найден
+2025-03-15 19:03:53,472 - utils: get_user_settings_from_json - INFO: Выполняем преобразование JSON-файла "test.json" в объект Python
+2025-03-15 19:03:53,473 - utils: get_user_settings_from_json - INFO: Преобразование JSON-файла "test.json" в объект Python выполнено
+2025-03-15 19:03:53,476 - utils: get_user_settings_from_json - INFO: Выполняем преобразование JSON-файла "test.json" в объект Python
+2025-03-15 19:03:53,476 - utils: get_user_settings_from_json - INFO: Преобразование JSON-файла "test.json" в объект Python выполнено
+2025-03-15 19:03:53,478 - utils: get_user_settings_from_json - INFO: Выполняем преобразование JSON-файла "test.json" в объект Python
+2025-03-15 19:03:53,479 - utils: get_user_settings_from_json - ERROR: Невозможно преобразовать json дынные: Expecting value: line 1 column 1 (char 0)
+2025-03-15 19:03:53,481 - utils: get_user_settings_from_json - INFO: Выполняем преобразование JSON-файла "test.json" в объект Python
+2025-03-15 19:03:53,481 - utils: get_user_settings_from_json - ERROR: Файл содержит не список
+2025-03-15 19:03:53,483 - utils: get_apilayer_convert_rates - INFO: Выполняем запрос у Exchange Rates Data API GET/convert
+2025-03-15 19:03:53,484 - utils: get_apilayer_convert_rates - INFO: Получение данный у Exchange Rates Data API GET/convert - прошло успешно
+2025-03-15 19:03:53,486 - utils: get_apilayer_convert_rates - INFO: Выполняем запрос у Exchange Rates Data API GET/convert
+2025-03-15 19:03:53,486 - utils: get_apilayer_convert_rates - ERROR: Ошибка API: 429 - You have
+2025-03-15 19:03:53,488 - utils: get_apilayer_convert_rates - INFO: Выполняем запрос у Exchange Rates Data API GET/convert
+2025-03-15 19:03:53,488 - utils: get_apilayer_convert_rates - ERROR: Connection Error. Please check your network connection
+2025-03-15 19:03:53,489 - utils: get_currencies_rates_in_rub - INFO: Началась функция перевода валют '['USD', 'EUR', 'CNY']'
+2025-03-15 19:03:53,490 - utils: get_currencies_rates_in_rub - INFO: Функция с валютами '['USD', 'EUR', 'CNY']' прошла успешно
+2025-03-15 19:03:53,491 - utils: get_currencies_rates_in_rub - INFO: Список пуст
+2025-03-15 19:03:53,494 - utils: filter_operations_by_week_and_date - INFO: Началась функция фильтрации
+2025-03-15 19:03:53,496 - utils: filter_operations_by_week_and_date - INFO: Фильтрация прошла успешно
+2025-03-15 19:03:53,499 - utils: filter_operations_by_month_and_date - INFO: Началась функция фильтрации
+2025-03-15 19:03:53,501 - utils: filter_operations_by_month_and_date - INFO: Фильтрация прошла успешно
+2025-03-15 19:03:53,504 - utils: filter_operations_by_year_and_date - INFO: Началась функция фильтрации
+2025-03-15 19:03:53,505 - utils: filter_operations_by_year_and_date - INFO: Фильтрация прошла успешно
+2025-03-15 19:03:53,508 - utils: filter_operations_by_date - INFO: Фильтрация в диапазоне 'W' начата
+2025-03-15 19:03:53,508 - utils: filter_operations_by_date - INFO: Фильтрация - с 1 дня недели по указанную дату
+2025-03-15 19:03:53,508 - utils: filter_operations_by_week_and_date - INFO: Началась функция фильтрации
+2025-03-15 19:03:53,509 - utils: filter_operations_by_week_and_date - INFO: Фильтрация прошла успешно
+2025-03-15 19:03:53,512 - utils: filter_operations_by_date - INFO: Фильтрация в диапазоне 'M' начата
+2025-03-15 19:03:53,512 - utils: filter_operations_by_date - INFO: Фильтрация - с 1 дня месяца по указанную дату
+2025-03-15 19:03:53,512 - utils: filter_operations_by_month_and_date - INFO: Началась функция фильтрации
+2025-03-15 19:03:53,513 - utils: filter_operations_by_month_and_date - INFO: Фильтрация прошла успешно
+2025-03-15 19:03:53,516 - utils: filter_operations_by_date - INFO: Фильтрация в диапазоне 'Y' начата
+2025-03-15 19:03:53,516 - utils: filter_operations_by_date - INFO: Фильтрация - с 1 дня года по указанную дату
+2025-03-15 19:03:53,516 - utils: filter_operations_by_year_and_date - INFO: Началась функция фильтрации
+2025-03-15 19:03:53,517 - utils: filter_operations_by_year_and_date - INFO: Фильтрация прошла успешно
+2025-03-15 19:03:53,520 - utils: filter_operations_by_date - INFO: Фильтрация в диапазоне 'ALL' начата
+2025-03-15 19:03:53,521 - utils: filter_operations_by_date - INFO: Фильтрация по дате - не производилась. Только по статусу OK
+2025-03-15 19:03:53,524 - utils: filter_operations_by_date - INFO: Фильтрация в диапазоне 'D' начата
+2025-03-15 19:03:53,524 - utils: filter_operations_by_date - ERROR: Данного диапазона 'D' - не поддерживается
+2025-03-15 19:03:53,530 - utils: generate_card_report - INFO: DataFrame пуст
+2025-03-15 19:03:53,533 - utils: get_stocks_price - INFO: Выполняем запрос у Exchange Rates Data API GET/convert
+2025-03-15 19:03:53,534 - utils: get_stocks_price - INFO: Выполняем запрос у Alpha Vantage/TIME_SERIES_DAILY
+2025-03-15 19:03:53,534 - utils: get_stocks_price - INFO: Получение данный у Alpha Vantage/TIME_SERIES_DAILY - прошло успешно
+2025-03-15 19:03:53,536 - utils: get_stocks_price - INFO: Выполняем запрос у Exchange Rates Data API GET/convert
+2025-03-15 19:03:53,537 - utils: get_stocks_price - INFO: Выполняем запрос у Alpha Vantage/TIME_SERIES_DAILY
+2025-03-15 19:03:53,537 - utils: get_stocks_price - ERROR: Ошибка API: 429 - You have
+2025-03-15 19:03:53,539 - utils: get_stocks_price - INFO: Выполняем запрос у Exchange Rates Data API GET/convert
+2025-03-15 19:03:53,539 - utils: get_stocks_price - INFO: Выполняем запрос у Alpha Vantage/TIME_SERIES_DAILY
+2025-03-15 19:03:53,539 - utils: get_stocks_price - ERROR: Connection Error. Please check your network connection
+2025-03-15 19:03:53,541 - utils: get_stocks_price - INFO: Выполняем запрос у Exchange Rates Data API GET/convert
+2025-03-15 19:03:53,542 - utils: get_stocks_price - INFO: Выполняем запрос у Alpha Vantage/TIME_SERIES_DAILY
+2025-03-15 19:03:53,542 - utils: get_stocks_price - ERROR: Ошибка при обработке данных: '4. close'
+2025-03-15 19:03:53,543 - utils: get_stocks_price - INFO: Выполняем запрос у Exchange Rates Data API GET/convert
+2025-03-15 19:03:53,544 - utils: get_stocks_price - INFO: Выполняем запрос у Alpha Vantage/TIME_SERIES_DAILY
+2025-03-15 19:03:53,544 - utils: get_stocks_price - ERROR: Ошибка при обработке данных: 'Meta Data'
+2025-03-15 19:03:53,544 - utils: get_stocks_price - ERROR: API rate limit is 25 requests per day
+2025-03-15 19:03:53,546 - utils: get_stocks_in_usd - INFO: Началась функция курса акций началась. Акции '['AAPL', 'AMZN', 'GOOGL']'
+2025-03-15 19:03:53,546 - utils: get_stocks_in_usd - INFO: Функция с акциями '['AAPL', 'AMZN', 'GOOGL']' - прошла успешно
+2025-03-15 19:03:53,547 - utils: get_stocks_in_usd - INFO: Список пуст
+2025-03-15 19:03:53,549 - utils: generator_top_five_transactions - INFO: Функция топ-5 транзакций по сумме платежа - началась
+2025-03-15 19:03:53,551 - utils: generator_top_five_transactions - INFO: Функция топ-5 транзакций по сумме платежа - выполнена
+2025-03-15 19:03:53,553 - utils: generator_top_five_transactions - INFO: DataFrame пуст
+2025-03-15 19:03:53,554 - utils: generator_top_five_transactions - INFO: Функция топ-5 транзакций по сумме платежа - началась
+2025-03-15 19:03:53,555 - utils: generator_top_five_transactions - ERROR: Отсутствует необходимый столбец: "['Описание'] not in index"
+2025-03-15 19:03:53,557 - utils: filter_expenses - INFO: Выполняется функция фильтрации по расходам
+2025-03-15 19:03:53,559 - utils: filter_expenses - INFO: Выполняется функция фильтрации по расходам
+2025-03-15 19:03:53,559 - utils: filter_expenses - ERROR: Отсутствует необходимый столбец: 'Сумма платежа'
+2025-03-15 19:03:53,560 - utils: filter_income - INFO: Выполняется функция фильтрации по доходам
+2025-03-15 19:03:53,563 - utils: filter_income - INFO: Выполняется функция фильтрации по доходам
+2025-03-15 19:03:53,563 - utils: filter_income - ERROR: Отсутствует необходимый столбец: 'Сумма платежа'
+2025-03-15 19:03:53,564 - utils: calculate_total_amount - INFO: Выполняется функция суммы платежей
+2025-03-15 19:03:53,566 - utils: calculate_total_amount - INFO: Выполняется функция суммы платежей
+2025-03-15 19:03:53,569 - utils: get_main_expenses - INFO: Выполняется функция получение основных расходов по категориям
+2025-03-15 19:03:53,571 - utils: get_main_expenses - INFO: Функция получение основных расходов по категориям выполнена
+2025-03-15 19:03:53,573 - utils: get_transfers_and_cash - INFO: Выполняется функция получение расходов по переводам и наличным
+2025-03-15 19:03:53,575 - utils: get_transfers_and_cash - INFO: Функция получение расходов по переводам и наличным - Выполнена
+2025-03-15 19:03:53,577 - utils: get_expenses_report - INFO: Формирование отчета по расходам - началось
+2025-03-15 19:03:53,577 - utils: get_expenses_report - INFO: Формирование отчета по расходам - выполнено
+2025-03-15 19:03:53,579 - utils: get_main_income - INFO: Выполняется функция получение основных доходов по категориям
+2025-03-15 19:03:53,580 - utils: get_main_income - INFO: Функция получение основных доходов по категориям - выполнена
+2025-03-15 19:03:53,583 - utils: get_income_report - INFO: Формирование отчета по доходам - началось
+2025-03-15 19:03:53,583 - utils: get_income_report - INFO: Формирование отчета по доходам - выполнено
+2025-03-15 19:03:53,587 - utils: validate_and_format_date - INFO: Функция проверки формата и форматирование начато
+2025-03-15 19:03:53,588 - utils: validate_and_format_date - INFO: Функция проверки формата и форматирование выполнена
+2025-03-15 19:03:53,589 - utils: filter_operations_by_month_and_date - INFO: Началась функция фильтрации
+2025-03-15 19:03:53,591 - utils: filter_operations_by_month_and_date - INFO: Фильтрация прошла успешно
+2025-03-15 19:03:53,594 - utils: validate_and_format_date - INFO: Функция проверки формата и форматирование начато
+2025-03-15 19:03:53,594 - utils: validate_and_format_date - INFO: Функция проверки формата и форматирование выполнена
+2025-03-15 19:03:53,595 - utils: filter_operations_by_date - INFO: Фильтрация в диапазоне 'M' начата
+2025-03-15 19:03:53,595 - utils: filter_operations_by_date - INFO: Фильтрация - с 1 дня месяца по указанную дату
+2025-03-15 19:03:53,595 - utils: filter_operations_by_month_and_date - INFO: Началась функция фильтрации
+2025-03-15 19:03:53,597 - utils: filter_operations_by_month_and_date - INFO: Фильтрация прошла успешно
