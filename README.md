@@ -55,7 +55,7 @@ poetry --version
 ## Установка:
 - Клонируйте репозиторий:
 ```bash
-git clone git@github.com:Streiker-Saik/CourseProject1.git
+git clone git@github.com:Streiker-Saik/App_analyzing_banking_transactions.git
 ```
 - Перейдите в директорию проекта:
 ```
