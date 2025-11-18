@@ -1,0 +1,16 @@
+2025-03-15 19:03:53,208 - decorators: decorator - INFO: Декоратор выводящий результат в json файл, применен к функции spending_by_category
+2025-03-15 19:03:53,209 - decorators: decorator - INFO: Декоратор выводящий результат в json файл, применен к функции spending_by_weekday
+2025-03-15 19:03:53,209 - decorators: decorator - INFO: Декоратор выводящий результат в json файл, применен к функции spending_by_workday
+2025-03-15 19:03:53,318 - decorators: decorator - INFO: Декоратор выводящий результат в json файл, применен к функции func_test
+2025-03-15 19:03:53,321 - decorators: wrapper - INFO: Декоратор выводящий результат в json файл, функции func_test. Выполнен успешно
+2025-03-15 19:03:53,325 - decorators: decorator - INFO: Декоратор выводящий результат в json файл, применен к функции invalid_json
+2025-03-15 19:03:53,326 - decorators: wrapper - ERROR: Невозможно преобразовать json дынные: Expecting value: line 1 column 1 (char 0)
+2025-03-15 19:03:53,352 - decorators: wrapper - INFO: Декоратор выводящий результат в json файл, функции spending_by_weekday. Выполнен успешно
+2025-03-15 19:03:53,359 - decorators: wrapper - INFO: Декоратор выводящий результат в json файл, функции spending_by_weekday. Выполнен успешно
+2025-03-15 19:03:53,367 - decorators: wrapper - INFO: Декоратор выводящий результат в json файл, функции spending_by_weekday. Выполнен успешно
+2025-03-15 19:03:53,377 - decorators: wrapper - INFO: Декоратор выводящий результат в json файл, функции spending_by_category. Выполнен успешно
+2025-03-15 19:03:53,384 - decorators: wrapper - INFO: Декоратор выводящий результат в json файл, функции spending_by_category. Выполнен успешно
+2025-03-15 19:03:53,390 - decorators: wrapper - INFO: Декоратор выводящий результат в json файл, функции spending_by_category. Выполнен успешно
+2025-03-15 19:03:53,396 - decorators: wrapper - INFO: Декоратор выводящий результат в json файл, функции spending_by_workday. Выполнен успешно
+2025-03-15 19:03:53,403 - decorators: wrapper - INFO: Декоратор выводящий результат в json файл, функции spending_by_workday. Выполнен успешно
+2025-03-15 19:03:53,410 - decorators: wrapper - INFO: Декоратор выводящий результат в json файл, функции spending_by_workday. Выполнен успешно
